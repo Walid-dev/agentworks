@@ -21,6 +21,7 @@ Full context load on demand: /agentworks
 - Dependencies and model IDs stay pinned; upgrades only on the monthly
   upgrade day, gated by the eval suite.
 - Every non-trivial choice gets one line in docs/decisions.md, newest on top.
+- Run pnpm lint and pnpm typecheck before every commit; both must pass.
 
 ## Current state
 Phase 0. Active package: packages/agent (bare tool-use loop).

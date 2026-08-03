@@ -1,19 +1,19 @@
 {
-  "name": "agentworks",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "description": "Compiles APIs into agent-worthy MCP toolsets, and proves it with benchmarks.",
-  "scripts": {
-    "typecheck": "tsc -b",
-    "lint": "biome check .",
-    "format": "biome format --write .",
-    "test": "vitest run"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.5.6",
-    "tsx": "^4.23.4",
-    "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
-  }
+	"name": "agentworks",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"description": "Compiles APIs into agent-worthy MCP toolsets, and proves it with benchmarks.",
+	"scripts": {
+		"typecheck": "tsc -b",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"test": "vitest run"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.6",
+		"tsx": "^4.23.4",
+		"typescript": "^7.0.2",
+		"vitest": "^4.1.10"
+	}
 }

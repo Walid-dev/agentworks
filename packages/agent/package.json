@@ -1,9 +1,9 @@
 {
-  "name": "@agentworks/agent",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "tsx src/index.ts"
-  }
+	"name": "@agentworks/agent",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsx src/index.ts"
+	}
 }

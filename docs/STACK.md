@@ -178,11 +178,7 @@ agentworks/
 
 ## Open items
 
-1. **Claude plan tier.** Check Settings then Billing at claude.ai, or run `/status` in Claude Code. Sizes the free Agent SDK sweep budget; blocks nothing. Record in `docs/decisions.md`.
-2. **Embeddings provider.** A Phase 2 gate; nothing to answer today. See glossary: embeddings.
-3. **OpenAI cross-model lane.** A Phase 3 gate; nothing to answer today. Existing OpenAI credits get spent here.
-4. **Written OK for work usage.** One message to the lead before the first work run.
-5. **Shortcut personal workspace.** Create the free workspace, generate an API token, put it in `.env`.
+Tracked in `docs/decisions.md` under Pending.
 
 ## Glossary (the stack, in plain words)
 

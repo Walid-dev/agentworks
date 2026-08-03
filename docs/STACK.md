@@ -84,6 +84,8 @@ Reasons, in order: (1) the existing Claude subscription includes a monthly Agent
 - `dev`: strong model for development iteration
 - `official`: ONE pinned strong model — the only model whose numbers appear in reports
 
+Tiers are pinned at first use: dev now, official at the Phase 1 gate, smoke when sweeps exist.
+
 ## Agent runtimes (pluggable)
 
 Every runtime implements one interface so servers can be measured under different harnesses:

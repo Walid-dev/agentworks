@@ -9,6 +9,7 @@ Format: `type(scope): imperative summary` (lowercase, no period, aim under 72 ch
 - Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `perf`
 - Scopes: package or area — `agent`, `harness`, `designer`, `builder`, `cli`, `servers`, `tasks`, `docs`, `repo`
 - Body: only when the "why" isn't obvious from the summary.
+- Commits record repository changes only; actions leaving no repo trace (secrets into .env, account setup) get no commit.
 - Examples:
   - `feat(agent): add tool-result loop with retry`
   - `docs(decisions): pin initial toolchain versions`

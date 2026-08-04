@@ -60,56 +60,6 @@ flowchart TB
     class API,GT ext
 ```
 
-## The diagram in plain words
-
-One machine, three rooms. The easiest way to hold it: a driving test where
-the driver is never the one being judged. Same driver, four different cars,
-same fixed course. The better car is the one that lets the driver finish
-the course best.
-
-**The green room is the exam (built first, Phases 0 and 1).** The course is
-the golden tasks: short real chores in plain files, each with a checkable
-definition of done ("a story named X now exists in the backlog").
-`bench run` starts a test day. The driver is the AI agent; its seat comes
-in two versions (Runtime A, the bare loop; Runtime B, the Agent SDK,
-useful for checking whether the seat itself changes results). The driver's
-brain is the model at Anthropic; every decision is an API call, which is
-why that box is gray: an outside service. The MCP client is the cable
-between driver and car, with two plug shapes: stdio for cars in our own
-garage (local servers) and HTTP for the manufacturer's car that stays at
-their building (the official remote server). A dashcam records everything:
-the transcripts. Then the inspectors, the graders, apply their one rule:
-never take the driver's word for anything. They check Shortcut's own
-records (ground truth) to confirm the chore truly happened. Every
-attempt's pass/fail, time, and cost lands in the scorebook (SQLite).
-`bench diff` puts two scorebook pages side by side; the benchmark report
-is the published scorecard.
-
-**The amber row is the four cars.** Naive: auto-assembled by bolting on
-every part in the catalog, 400 unlabeled buttons. Hand-built: crafted by
-a person, twelve clear controls. Official: the car the vendor's own
-engineers ship. Generated: the car our factory produces. All four take
-the identical exam; change one thing only, the car, keep everything else
-fixed.
-
-**The blue room is the factory (Phase 2).** It reads two books, the
-engineering manual (the API spec) and the human handbook (the docs), with
-a small filing index so the Designer can pull the right pages fast. The
-Designer draws a blueprint (`design.json`), plain data a human can read.
-The Builder assembles the car from the blueprint using fixed templates.
-The AI designs; the templates build.
-
-**The dashed arrow is Phase 3, the loop.** Failure notes from each test
-day travel back to the blueprint desk: wrong button pressed, confusing
-label, missing control. The next blueprint gets better. That arrow is the
-difference between a self-improving machine and a one-shot converter.
-
-Reading keys: purple cylinders are filing cabinets, places where records
-live; gray boxes are outside services. Build order runs opposite to the
-arrows: exam room first, factory second, loop last, because the measuring
-instrument comes before the factory. A factory nobody can grade is a
-guess machine.
-
 ## Runtime & tooling
 
 | Concern          | Choice                          | Why                                                        |

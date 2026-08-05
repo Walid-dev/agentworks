@@ -38,7 +38,7 @@ marked DONE only when the evidence named in it exists in the repo.
   Add to docs/CONVENTIONS.md, Commits section: `feat` adds a capability
   to the repo, including new packages or servers; `chore` is repo
   maintenance with no capability change.
-  Evidence: docs/CONVENTIONS.md, commit `90d3937`.
+  Evidence: docs/CONVENTIONS.md, commit `e2f2abb`.
   Commit: `docs: define feat vs chore`
 
 ### TODO

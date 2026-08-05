@@ -14,8 +14,11 @@ What it does:
 
 Boundaries:
 - Raw @anthropic-ai/sdk only. No frameworks, no MCP, no streaming, no
-  retries, no config system. Model ID and API key come from env.
-- One file, roughly 100 lines. Ugly is acceptable; unclear is not.
+  retries, no config system. Tool failures are surfaced to the model as
+  tool_result with is_error (part of the protocol, not a retry). Model ID
+  and API key come from env.
+- One file. Executable core stays around 100 lines; comments are exempt.
+  Ugly is acceptable; unclear is not.
 
 Done when: the prompt "What time will it be in 90 minutes?" produces a
 transcript showing both tools used in sequence and a correct final answer.

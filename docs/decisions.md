@@ -4,6 +4,9 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-04 — Finish line reframed: measured shrinking gap to Official,
+  parity as stretch — official toolsets embed non-public knowledge; the
+  defensible claim is quantified approach, not victory.
 - 2026-08-03 — Loop dev model: claude-sonnet-4-6 via ANTHROPIC_MODEL env — dev tier; official benchmark model chosen at Phase 1.
 - 2026-08-03 — Spec-first for core components (Option B): agent loop, harness, graders, Designer prompts each get a short intent spec in docs/specs/ before AI builds; first spec supplied as template — stated intent makes review catch drift. Commits: docs(specs): add agent loop spec and chore(repo): command v2 writes STATUS.md and proposes next steps.
 - 2026-08-03 — Toolchain pinned: pnpm 11.20.0, typescript 7.0.2, tsx 4.23.4, vitest 4.1.10, biome 2.5.6 — recorded at first install; lockfile is the source of truth.

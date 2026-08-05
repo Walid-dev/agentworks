@@ -1,6 +1,6 @@
 # AgentWorks
 
-*A machine that teaches AI agents to use any software, and proves it with numbers.*
+_A machine that teaches AI agents to use any software, and proves it with numbers._
 
 ---
 
@@ -33,13 +33,17 @@ The Examiner is the most valuable part. It turns opinions ("this looks good") in
 
 One comparison, repeated throughout the project. The same tasks, three toolsets:
 
-| Toolset  | Made by                                                        |
-| -------- | -------------------------------------------------------------- |
-| Naive    | Automatic 1-to-1 conversion (today's common shortcut)           |
-| Ours     | Our machine                                                     |
-| Official | Human experts (the software company's own hand-built version)   |
+| Toolset  | Made by                                                       |
+| -------- | ------------------------------------------------------------- |
+| Naive    | Automatic 1-to-1 conversion (today's common shortcut)         |
+| Ours     | Our machine                                                   |
+| Official | Human experts (the software company's own hand-built version) |
 
-Beating "Naive" is expected early. Matching or beating "Official" is the finish line: proof that the machine produces expert-grade work automatically.
+Beating "Naive" is expected early. The finish line is a small, honestly
+measured gap to "Official" that shrinks with every improvement loop;
+matching it is the stretch goal. Official toolsets carry years of product
+knowledge, some never written down, so approaching them on public
+information alone is already the result that matters.
 
 ## Goals, in order
 
@@ -113,7 +117,6 @@ Public release: a clean command-line tool anyone can run, and the essay: what ha
 1. **Test software target:** Shortcut, through a free personal workspace.
 2. **Budget:** development rides the existing Claude subscription (Claude Code plus its monthly programmatic credit); a small pay-as-you-go API budget powers the measuring instrument itself.
 3. **Repository visibility:** private until Phase 4, then published together with the essay.
-4. **Work usage:** welcome; built entirely on personal time and accounts, and used at work with company credentials once a written OK is in hand.
 
 ## Small glossary
 
@@ -125,4 +128,4 @@ Public release: a clean command-line tool anyone can run, and the essay: what ha
 
 ---
 
-*Week one starts with one small file: a tiny agent, built by hand.*
+_Week one starts with one small file: a tiny agent, built by hand._

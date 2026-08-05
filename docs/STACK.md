@@ -62,14 +62,14 @@ flowchart TB
 
 ## Runtime & tooling
 
-| Concern          | Choice                          | Why                                                        |
-| ---------------- | ------------------------------- | ---------------------------------------------------------- |
-| Runtime          | Node 22 LTS                     | Boring, supported everywhere                                |
-| Language         | TypeScript, `strict: true`      | Decided; velocity stays on AI concepts, not syntax          |
-| Package manager  | pnpm + workspaces               | One repo, packages emerge per phase                         |
-| Dev execution    | tsx                             | Run TS directly, no build step in dev                       |
-| Unit tests       | vitest                          | Tests OUR code (parsers, graders). The Examiner tests toolsets — different thing |
-| Lint + format    | Biome                           | One tool, one config, fast                                  |
+| Concern         | Choice                     | Why                                                                              |
+| --------------- | -------------------------- | -------------------------------------------------------------------------------- |
+| Runtime         | Node 22 LTS                | Boring, supported everywhere                                                     |
+| Language        | TypeScript, `strict: true` | Decided; velocity stays on AI concepts, not syntax                               |
+| Package manager | pnpm + workspaces          | One repo, packages emerge per phase                                              |
+| Dev execution   | tsx                        | Run TS directly, no build step in dev                                            |
+| Unit tests      | vitest                     | Tests OUR code (parsers, graders). The Examiner tests toolsets — different thing |
+| Lint + format   | Biome                      | One tool, one config, fast                                                       |
 
 ## Model providers
 
@@ -80,6 +80,7 @@ Reasons, in order: (1) the existing Claude subscription includes a monthly Agent
 **Secondary (Phase 3+): OpenAI** as a cross-model lane. Existing OpenAI credits get used here. Cross-model results make the final write-up stronger.
 
 **Model tiers** (exact IDs pinned in config, recorded in `docs/decisions.md`):
+
 - `smoke`: cheapest/fastest model — 30-second sanity sweeps before real runs
 - `dev`: strong model for development iteration
 - `official`: ONE pinned strong model — the only model whose numbers appear in reports
@@ -108,15 +109,39 @@ interface AgentRuntime {
 
 ## Data layer — three tiers, right-sized
 
-| Data              | Home                              | Why                                                       |
-| ----------------- | --------------------------------- | ---------------------------------------------------------- |
-| Golden tasks      | YAML files in git (`tasks/`)      | Tests deserve review and diffs; zod-validated on load       |
-| Transcripts       | JSONL on disk (`runs/`)           | Big blobs stay out of databases                             |
-| Metrics & results | SQLite (`runs/bench.sqlite`)      | The core query is "run A vs run B by task/server/model" — that's SQL. One file, zero services |
+| Data              | Home                         | Why                                                                                           |
+| ----------------- | ---------------------------- | --------------------------------------------------------------------------------------------- |
+| Golden tasks      | YAML files in git (`tasks/`) | Tests deserve review and diffs; zod-validated on load                                         |
+| Transcripts       | JSONL on disk (`runs/`)      | Big blobs stay out of databases                                                               |
+| Metrics & results | SQLite (`runs/bench.sqlite`) | The core query is "run A vs run B by task/server/model" — that's SQL. One file, zero services |
 
 - SQLite via `better-sqlite3` + Drizzle ORM. The DB is **derived and disposable**: rebuildable from transcripts. Canonical data lives in files.
 - Phase 2 adds `sqlite-vec` to the same file for docs retrieval (the RAG component).
 - Embeddings: **decision deferred to Phase 2 gate.** Anthropic has no embeddings endpoint; candidates are Voyage or OpenAI. Cost is negligible either way.
+
+## Metrics (the scorecard)
+
+Reported per toolset as a set, never collapsed into one composite score:
+weights are arbitrary and composites hide tradeoffs.
+
+Phase 1 core, captured on every run:
+
+- **Task success rate** — did the chore verifiably happen, per the graders against ground truth.
+- **Tool-selection accuracy** — each golden task names its expected
+  tools; did the agent pick them.
+- **Tool calls per task** — fewer calls for the same success means a
+  clearer toolset.
+- **Tokens in and out** — cost, from the API usage fields.
+- **Wall-clock latency** — compared only within the same transport;
+  remote HTTP and local stdio are not comparable.
+- **Invalid tool calls** — a nonexistent tool named, or arguments that
+  break the declared schema.
+- **Variance across repetitions** — consistency is itself a quality.
+
+Later, once the harness is proven:
+
+- **Error recovery under injected tool faults** — also measures whether
+  a toolset's error messages help the agent recover.
 
 ## Pipelines
 

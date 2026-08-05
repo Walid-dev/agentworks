@@ -14,6 +14,9 @@ marked DONE only when the evidence named in it exists in the repo.
   and the person reviews the diff.
 - Only the current phase is detailed. The next phase gets planned at its
   gate, because its steps depend on findings that don't exist yet.
+- Evidence names an artifact in the repo (a file path, a tag, a working
+  package), not a commit hash. A step and its evidence land in the same
+  commit; hashes are what git already tracks.
 
 ---
 

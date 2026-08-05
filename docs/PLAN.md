@@ -34,14 +34,14 @@ marked DONE only when the evidence named in it exists in the repo.
 - **0.4 Verify the loop end to end.**
   Evidence: docs/reports/agent-loop-first-run.md, commit `ca1d72d`.
 
-### TODO
-
 - **0.5 Define `feat` vs `chore` in the conventions.** Owner: AI.
   Add to docs/CONVENTIONS.md, Commits section: `feat` adds a capability
   to the repo, including new packages or servers; `chore` is repo
   maintenance with no capability change.
-  Evidence: the line exists in docs/CONVENTIONS.md.
+  Evidence: docs/CONVENTIONS.md, commit `90d3937`.
   Commit: `docs: define feat vs chore`
+
+### TODO
 
 - **0.6 Create the Shortcut workspace and API token.** Owner: W.
   Free workspace, generate an API token, put it in `.env` as

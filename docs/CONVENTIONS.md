@@ -7,6 +7,8 @@ Decided once, argued never. Change only via an entry in `decisions.md`.
 Format: `type(scope): imperative summary` (lowercase, no period, aim under 72 chars).
 
 - Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `perf`
+- `feat` adds a capability to the repo, including new packages or
+  servers; `chore` is repo maintenance with no capability change.
 - Scopes: package or area — `agent`, `harness`, `designer`, `builder`, `cli`, `servers`, `tasks`, `docs`, `repo`
 - Body: only when the "why" isn't obvious from the summary.
 - Commits record repository changes only; actions leaving no repo trace (secrets into .env, account setup) get no commit.

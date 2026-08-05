@@ -23,6 +23,12 @@ Full context load on demand: /agentworks
 - Every non-trivial choice gets one line in docs/decisions.md, newest on top.
 - Run pnpm lint and pnpm typecheck before every commit; both must pass.
 
+## Proposing work
+Before proposing any action, state which document authorizes it (file and
+section). If no document does, don't propose it: name the gap in one line
+and ask. Proposals must be traceable to the canon, not inferred from what
+seems useful.
+
 ## Current state
 Phase 0. Active package: packages/agent (bare tool-use loop).
 Exact status: `git log --oneline -10` plus Pending in docs/decisions.md.

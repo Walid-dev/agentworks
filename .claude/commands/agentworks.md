@@ -19,13 +19,10 @@ Write the findings to STATUS.md at the repo root (overwrite, never
 append), dated at the top, containing in this order:
 
 - the project in one paragraph
-- **Progress map**: every phase from PROJECT.md's plan, in order. Under
-  each phase, its concrete milestones as a checklist. Mark ✅ only when
-  verifiable evidence exists in the repo (a file, a merged commit, a
-  report); mark ⬜ otherwise; mark the single milestone currently in
-  flight with ▶. Under each ✅, one indented line naming its evidence.
-  Never invent milestones: derive them from the phase descriptions and
-  exit criteria in PROJECT.md.
+- **The plan, as a reminder**: every phase from PROJECT.md in order,
+  each milestone as one plain-words sentence, no status marks of any
+  kind; where the project currently stands is stated once in the
+  "current phase" section below, nowhere else.
 - current phase and its next exit criterion
 - **Toolchain**: pinned versions from step 4 plus the pinned model from
   docs/decisions.md, one compact list

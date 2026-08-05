@@ -13,20 +13,19 @@ Load the complete AgentWorks context:
    installed versions.
 
 Verify any claim about existing or missing files against the list from
-step 1 before writing it.
+step 1 before writing it. Never call a milestone done unless its own
+completion condition is evidenced in the repo; for milestones with a
+spec, that means the spec's "Done when", not the code merely existing.
 
 Write the findings to STATUS.md at the repo root (overwrite, never
 append), dated at the top, containing in this order:
 
 - the project in one paragraph
-- **The plan, as a reminder**: every phase from PROJECT.md in order,
-  each milestone as one plain-words sentence, no status marks of any
-  kind; where the project currently stands is stated once in the
-  "current phase" section below, nowhere else.
-- current phase and its next exit criterion
+- current phase, one line naming its next exit criterion, and one line
+  pointing to docs/PROJECT.md for the full phase plan
 - **Toolchain**: pinned versions from step 4 plus the pinned model from
   docs/decisions.md, one compact list
-- open items from the Pending section of decisions.md
+- open items from the Pending section of docs/decisions.md
 - Recommended next steps: the 1 to 3 most useful concrete actions,
   judged against the current phase exit criteria, most valuable first,
   with a one-line reason and a proposed Conventional Commit message for

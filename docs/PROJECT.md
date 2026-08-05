@@ -114,7 +114,7 @@ Public release: a clean command-line tool anyone can run, and the essay: what ha
 
 ## Confirmed decisions
 
-1. **Test software target:** Shortcut, through a free personal workspace.
+1. **Test software target:** Shortcut, through a free workspace.
 2. **Budget:** development rides the existing Claude subscription (Claude Code plus its monthly programmatic credit); a small pay-as-you-go API budget powers the measuring instrument itself.
 3. **Repository visibility:** private until Phase 4, then published together with the essay.
 

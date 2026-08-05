@@ -14,7 +14,7 @@ One line per decision: date — decision — why. Newest on top.
 - 2026-08-02 — Name: AgentWorks (supersedes Agentworthy, Forgebench; AgentCalibre considered) — 'the works' that build toolsets plus the 'it works' the Examiner proves; free on npm, verified twice; 'agentworthy' stays lowercase as the verdict grade in reports.
 - 2026-08-02 — Conventions v1 adopted (docs/CONVENTIONS.md) — decided once, argued never.
 - 2026-08-02 — Repository private until Phase 4 — publish together with the benchmark essay.
-- 2026-08-02 — Benchmark target: Shortcut via free personal workspace — public API, official server to beat, daily intuition for golden tasks.
+- 2026-08-02 — Benchmark target: Shortcut via a free workspace — public API, official server to beat, daily intuition for golden tasks.
 - 2026-08-02 — Stack per docs/STACK.md (TS strict, pnpm workspaces, MCP SDK, zod, SQLite + Drizzle, Biome defaults) — boring core, zero infrastructure.
 
 ## Pending
@@ -23,5 +23,5 @@ One line per decision: date — decision — why. Newest on top.
 - Embeddings provider — Phase 2 gate (Voyage vs OpenAI).
 - OpenAI cross-model lane — Phase 3 gate.
 - License — decide at Phase 4 with publication.
-- Shortcut personal workspace + API token into .env — needed before hand-built toolset work.
-- Written OK from lead before any work usage.
+- Shortcut workspace + API token into `.env` — needed before
+  hand-built toolset work.

@@ -189,7 +189,7 @@ agentworks/
 
 ## Secrets
 
-`.env`, never committed. Expected keys: `ANTHROPIC_API_KEY`, `SHORTCUT_API_TOKEN` (personal workspace), later `VOYAGE_API_KEY` or `OPENAI_API_KEY`.
+`.env`, never committed. Expected keys: `ANTHROPIC_API_KEY`, `SHORTCUT_API_TOKEN`, later `VOYAGE_API_KEY` or `OPENAI_API_KEY`.
 
 ## Explicit exclusions
 

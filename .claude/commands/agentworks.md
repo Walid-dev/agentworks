@@ -8,6 +8,7 @@ Load the complete AgentWorks context:
 1. Run `git ls-files` to see every file that exists in the repo.
 2. Read docs/PROJECT.md, docs/STACK.md, docs/CONVENTIONS.md,
    docs/decisions.md, and every file in docs/specs/ if present.
+   Read docs/PLAN.md.
 3. Run `git log --reverse --format='%as %h %s'` for the full history.
 4. Read the root package.json and every packages/*/package.json for
    installed versions.
@@ -26,10 +27,12 @@ append), dated at the top, containing in this order:
 - **Toolchain**: pinned versions from step 4 plus the pinned model from
   docs/decisions.md, one compact list
 - open items from the Pending section of docs/decisions.md
-- Recommended next steps: the 1 to 3 most useful concrete actions,
-  judged against the current phase exit criteria, most valuable first,
-  with a one-line reason and a proposed Conventional Commit message for
-  each
+- **Next steps**: from docs/PLAN.md, the first TODO step in order, plus
+  at most the two after it. Quote each step's number, title, owner, and
+  commit message as written; do not invent, reorder, or reword steps. If
+  a step's owner is W, say it is waiting on the person. If PLAN.md
+  appears wrong or blocked, say so in one line instead of substituting
+  your own step.
 - **Full history**: every commit from step 3, chronological, one line
   each, as a collapsed appendix at the very end
 

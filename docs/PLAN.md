@@ -72,11 +72,24 @@ marked DONE only when the evidence named in it exists in the repo.
   Evidence: the package exists and starts; one tool responds.
   Commit: `feat(servers): add hand-built shortcut server with first tool`
 
-- **0.9 Build the remaining tools from the spec.** Owner: AI.
+- **0.9a Build the read tools from the spec.** Owner: AI.
+  Read tools: `list_workspace_vocabulary`, `list_my_stories`,
+  `list_team_stories`, `find_stories`, `get_story`. Split before 0.9b
+  because write tools mutate the real workspace, so the read half is
+  verified first.
   One commit per tool or per small group. Each tool's description is
   written for a machine reader: what it does, when to use it, what it
   returns. Responses trimmed to the fields the chore needs.
-  Evidence: every tool in the spec exists in the package.
+  Evidence: every read tool in the spec exists in the package.
+  Commit: `feat(servers): add <tool names> to hand-built shortcut server`
+
+- **0.9b Build the write tools from the spec.** Owner: AI.
+  Write tools: `create_story`, `move_story`, `comment_on_story`,
+  `update_story`.
+  One commit per tool or per small group. Each tool's description is
+  written for a machine reader: what it does, when to use it, what it
+  returns. Responses trimmed to the fields the chore needs.
+  Evidence: every write tool in the spec exists in the package.
   Commit: `feat(servers): add <tool names> to hand-built shortcut server`
 
 - **0.10 Verify the toolset inside a real AI assistant.** Owner: W.

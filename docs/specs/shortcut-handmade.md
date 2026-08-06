@@ -63,6 +63,10 @@ Ten tools.
   returns, written to be read by another AI.
 - Tools that need ids accept human input where possible: a story id or a
   title fragment, a team name rather than a uuid.
+- State selection is by workflow state name (matched against the list
+  from `list_workspace_vocabulary`), not by state type. "In Progress"
+  means the state literally named In Progress; the workflow has two
+  states of type `started`, so filtering by type is wrong.
 
 ## Done when
 

@@ -23,5 +23,3 @@ One line per decision: date — decision — why. Newest on top.
 - Embeddings provider — Phase 2 gate (Voyage vs OpenAI).
 - OpenAI cross-model lane — Phase 3 gate.
 - License — decide at Phase 4 with publication.
-- Shortcut workspace + API token into `.env` — needed before
-  hand-built toolset work.

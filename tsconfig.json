@@ -1,4 +1,7 @@
 {
 	"files": [],
-	"references": [{ "path": "packages/agent" }]
+	"references": [
+		{ "path": "packages/agent" },
+		{ "path": "servers/shortcut-handbuilt" }
+	]
 }

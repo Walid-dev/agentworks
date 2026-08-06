@@ -27,9 +27,6 @@ Full context load on demand: /agentworks
   tool's spec or the report.
 - Always include the exact verification command in the final response,
   copy-pasteable, reading secrets from .env rather than inlining them.
-  Example:
-  curl -sH "Shortcut-Token: $(grep SHORTCUT_API_TOKEN .env | cut -d= -f2)" \
-    https://api.app.shortcut.com/api/v3/member | jq
 
 ## Proposing work
 Before proposing any action, state which document authorizes it (file and

@@ -22,6 +22,14 @@ Full context load on demand: /agentworks
   upgrade day, gated by the eval suite.
 - Every non-trivial choice gets one line in docs/decisions.md, newest on top.
 - Run pnpm lint and pnpm typecheck before every commit; both must pass.
+- For any tool touching an external API, confirm the real response shape
+  with a live call before finalizing types. Record surprises in the
+  tool's spec or the report.
+- Always include the exact verification command in the final response,
+  copy-pasteable, reading secrets from .env rather than inlining them.
+  Example:
+  curl -sH "Shortcut-Token: $(grep SHORTCUT_API_TOKEN .env | cut -d= -f2)" \
+    https://api.app.shortcut.com/api/v3/member | jq
 
 ## Proposing work
 Before proposing any action, state which document authorizes it (file and

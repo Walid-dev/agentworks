@@ -37,6 +37,27 @@ section). If no document does, don't propose it: name the gap in one line
 and ask. Proposals must be traceable to the canon, not inferred from what
 seems useful.
 
+## After every commit
+Print a report in the conversation, in this order:
+
+1. The commit line, and which docs/PLAN.md step it belongs to.
+2. `git show --stat` for the commit.
+3. Decisions taken that the canon did not dictate, with reasoning, and
+   whether each was logged in docs/decisions.md.
+4. Findings: anything the live API, tooling, or code revealed that
+   contradicted an assumption.
+5. Untested paths: code written but never executed, and what would
+   exercise it. Be exhaustive; this section is the one most likely to be
+   under-reported.
+6. Verification: the exact commands run and their raw output. Never
+   summarise output a reader would want to see.
+7. Open questions: anything decided by default that a human should
+   confirm.
+8. `git show` for the commit, excluding pnpm-lock.yaml.
+
+Report what happened, not what was intended. Nothing is called verified
+without its output present in section 6. State uncertainty plainly.
+
 ## Current state
 Phase 0. Active package: packages/agent (bare tool-use loop).
 Exact status: `git log --oneline -10` plus Pending in docs/decisions.md.

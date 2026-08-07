@@ -4,6 +4,12 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-07 — Hand-built baseline provenance: human-specified from real
+  workflow (docs/specs/shortcut-handmade.md), AI-implemented under
+  iterative expert review with live-API verification. Reports and the
+  Phase 4 essay describe this lane as the "curated" baseline, never as
+  purely human-authored; the shared-model-family overlap with the
+  Designer is disclosed as a limitation.
 - 2026-08-07 — create_story issues a single POST /stories with tasks and
   the linked story inline; Shortcut accepts both as arguments to the
   create call — verified against the live API — so the tool has no

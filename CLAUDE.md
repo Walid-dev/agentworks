@@ -43,6 +43,12 @@ section). If no document does, don't propose it: name the gap in one line
 and ask. Proposals must be traceable to the canon, not inferred from what
 seems useful.
 
+- When an external system likely has its own answer to a design
+  question (a default, a limit, a required order), check the live
+  system for it before inventing one. If the canon is silent and the
+  system is too, ask before choosing; a chosen default is a decision,
+  and decisions belong to the human.
+
 ## After every commit
 Append a report to REPORT.md at the repo root (gitignored). Never
 overwrite — a session can contain several commits. Separate reports

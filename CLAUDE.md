@@ -38,7 +38,10 @@ and ask. Proposals must be traceable to the canon, not inferred from what
 seems useful.
 
 ## After every commit
-Print a report in the conversation, in this order:
+Append a report to REPORT.md at the repo root (gitignored). Never
+overwrite — a session can contain several commits. Separate reports
+with a horizontal rule and use the commit hash as a heading. Each
+report contains, in this order:
 
 1. The commit line, and which docs/PLAN.md step it belongs to.
 2. `git show --stat` for the commit.
@@ -54,6 +57,9 @@ Print a report in the conversation, in this order:
 7. Open questions: anything decided by default that a human should
    confirm.
 8. `git show` for the commit, excluding pnpm-lock.yaml.
+
+In the conversation, print only a two-line summary: the commit line, and
+anything in sections 4, 5, or 7 that needs attention.
 
 Report what happened, not what was intended. Nothing is called verified
 without its output present in section 6. State uncertainty plainly.

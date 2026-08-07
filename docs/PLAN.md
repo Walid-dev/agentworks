@@ -94,14 +94,14 @@ marked DONE only when the evidence named in it exists in the repo.
   docs/reports/shortcut-handbuilt-verification.md.
   Commit: `feat(servers): add <tool names> to hand-built shortcut server`
 
-### TODO
-
 - **0.10 Verify the toolset inside a real AI assistant.** Owner: W.
   Register the server in Claude Code, then run the chores from the spec
   by conversation. Record the session: what was asked, which tools were
   called, what came back, what went wrong.
   Evidence: docs/reports/handbuilt-first-run.md.
   Commit: `docs(reports): record hand-built toolset verification`
+
+### TODO
 
 - **0.11 Produce the naive baseline.** Owner: AI.
   Pick one existing OpenAPI-to-MCP converter, pin its exact version,

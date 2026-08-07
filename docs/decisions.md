@@ -4,6 +4,14 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-07 — create_story issues a single POST /stories with tasks and
+  the linked story inline; Shortcut accepts both as arguments to the
+  create call — verified against the live API — so the tool has no
+  multi-step path and no partial-success state. If the create fails,
+  nothing lands; if it succeeds, the whole story lands. A tool that
+  half-succeeds and reports success would teach the model something
+  false, so avoiding that state entirely is preferable to detecting and
+  reporting it.
 - 2026-08-06 — Workspace vocabulary (self, workflows, teams, members)
   fetched once at startup and cached in module scope; startup fetch
   failure is fatal (server exits before connecting) — freshness during

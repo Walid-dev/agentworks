@@ -7,6 +7,7 @@ import {
 	MemberSchema,
 	SearchStoriesSchema,
 	type Story,
+	StoryCommentSchema,
 	StorySchema,
 	shortcut,
 	WorkflowSchema,
@@ -25,12 +26,30 @@ const [SELF, WORKFLOWS, TEAMS, MEMBERS] = await Promise.all([
 const STATE_NAME_BY_ID = new Map(
 	WORKFLOWS.flatMap((wf) => wf.states.map((s) => [s.id, s.name] as const)),
 );
+const STATE_ID_BY_NAME_LOWER = new Map(
+	WORKFLOWS.flatMap((wf) =>
+		wf.states.map((s) => [s.name.toLowerCase(), s.id] as const),
+	),
+);
 const TEAM_NAME_BY_ID = new Map(TEAMS.map((t) => [t.id, t.name] as const));
 const MENTION_BY_ID = new Map(
 	MEMBERS.map(
 		(m) => [m.id, m.profile.mention_name ?? m.profile.name ?? m.id] as const,
 	),
 );
+const MEMBER_ID_BY_MENTION_LOWER = new Map<string, string>();
+for (const m of MEMBERS) {
+	if (m.profile.mention_name)
+		MEMBER_ID_BY_MENTION_LOWER.set(m.profile.mention_name.toLowerCase(), m.id);
+}
+
+const FIRST_WORKFLOW = WORKFLOWS[0];
+if (!FIRST_WORKFLOW) throw new Error("no workflows found at startup");
+const DEFAULT_STATE = FIRST_WORKFLOW.states
+	.slice()
+	.sort((a, b) => a.position - b.position)[0];
+if (!DEFAULT_STATE) throw new Error("workflow has no states");
+const DEFAULT_STATE_ID = DEFAULT_STATE.id;
 
 function stateName(id: number): string {
 	return STATE_NAME_BY_ID.get(id) ?? `unknown-state(${id})`;
@@ -65,10 +84,29 @@ function resolveState(name: string): string {
 			if (s.name.toLowerCase() === norm) return s.name;
 		}
 	}
-	const valid = Array.from(
+	throw new Error(`unknown state: ${name}. Valid states: ${validStateNames()}`);
+}
+
+function resolveStateId(name: string): number {
+	const id = STATE_ID_BY_NAME_LOWER.get(name.toLowerCase());
+	if (id === undefined) {
+		throw new Error(
+			`unknown state: ${name}. Valid states: ${validStateNames()}`,
+		);
+	}
+	return id;
+}
+
+function resolveMemberId(mention: string): string {
+	const id = MEMBER_ID_BY_MENTION_LOWER.get(mention.toLowerCase());
+	if (id === undefined) throw new Error(`unknown member: ${mention}`);
+	return id;
+}
+
+function validStateNames(): string {
+	return Array.from(
 		new Set(WORKFLOWS.flatMap((wf) => wf.states.map((s) => s.name))),
 	).join(", ");
-	throw new Error(`unknown state: ${name}. Valid states: ${valid}`);
 }
 
 function compactStory(s: Story) {
@@ -78,6 +116,7 @@ function compactStory(s: Story) {
 		state: stateName(s.workflow_state_id),
 		team: teamName(s.group_id),
 		due_date: s.deadline,
+		url: s.app_url,
 	};
 }
 
@@ -240,6 +279,158 @@ server.tool(
 	async ({ id }) => {
 		const story = await shortcut(`/stories/${id}`, { schema: StorySchema });
 		return textResult(fullStory(story));
+	},
+);
+
+server.tool(
+	"create_story",
+	"Create a new story in a single atomic call. Shortcut accepts tasks and one linked story inline with the create, so there is no multi-step orchestration and no partial-success state: the whole story lands or nothing does. Team is required (name or mention_name from list_workspace_vocabulary); throws with the list of valid teams if unknown. State is case-insensitive against workflow state names and defaults to the workflow's first state if omitted; throws with valid state names if the provided name is unknown. By default the caller is set as both owner and requester; pass set_me_as_owner or set_me_as_requester false to disable. Returns the compact new story: id, title, state, team, due_date, url.",
+	{
+		title: z.string().describe("story title"),
+		team: z
+			.string()
+			.describe("team name or mention_name from list_workspace_vocabulary"),
+		story_type: z.enum(["feature", "bug", "chore"]),
+		description: z.string().optional(),
+		state: z
+			.string()
+			.optional()
+			.describe(
+				"case-insensitive workflow state name; if omitted, defaults to the workflow's first state",
+			),
+		due_date: z.string().optional().describe("ISO 8601 timestamp"),
+		tasks: z
+			.array(z.string())
+			.optional()
+			.describe("list of task descriptions to attach"),
+		linked_story: z
+			.object({
+				verb: z.enum(["blocks", "duplicates", "relates to"]),
+				other_story_id: z.number(),
+			})
+			.optional(),
+		set_me_as_owner: z.boolean().optional().describe("default true"),
+		set_me_as_requester: z.boolean().optional().describe("default true"),
+	},
+	async ({
+		title,
+		team,
+		story_type,
+		description,
+		state,
+		due_date,
+		tasks,
+		linked_story,
+		set_me_as_owner,
+		set_me_as_requester,
+	}) => {
+		const t = resolveTeam(team);
+		const workflow_state_id = state ? resolveStateId(state) : DEFAULT_STATE_ID;
+		const body: Record<string, unknown> = {
+			name: title,
+			group_id: t.id,
+			story_type,
+			workflow_state_id,
+		};
+		if (description !== undefined) body.description = description;
+		if (due_date !== undefined) body.deadline = due_date;
+		if (tasks !== undefined && tasks.length > 0) {
+			body.tasks = tasks.map((d) => ({ description: d }));
+		}
+		if (linked_story !== undefined) {
+			body.story_links = [
+				{ verb: linked_story.verb, object_id: linked_story.other_story_id },
+			];
+		}
+		if (set_me_as_owner !== false) body.owner_ids = [SELF.id];
+		if (set_me_as_requester !== false) body.requested_by_id = SELF.id;
+		const story = await shortcut("/stories", {
+			method: "POST",
+			body,
+			schema: StorySchema,
+		});
+		return textResult(compactStory(story));
+	},
+);
+
+server.tool(
+	"move_story",
+	"Change a story's workflow state. Separate from update_story because moving is the single most frequent write; a narrow tool with validated state names is far harder to misuse than a generic update. Story id must exist (throws otherwise). State is matched case-insensitively against workflow state names (from list_workspace_vocabulary); throws with the list of valid states if the name does not match. Returns the compact updated story reflecting the new state.",
+	{
+		id: z.number().describe("story id"),
+		state: z.string().describe("target workflow state name"),
+	},
+	async ({ id, state }) => {
+		const workflow_state_id = resolveStateId(state);
+		const story = await shortcut(`/stories/${id}`, {
+			method: "PUT",
+			body: { workflow_state_id },
+			schema: StorySchema,
+		});
+		return textResult(compactStory(story));
+	},
+);
+
+server.tool(
+	"comment_on_story",
+	"Add a comment to a story. The routine progress update. Story id must exist (throws otherwise). Returns { story_id, comment_id, author (mention_name), text, created_at }.",
+	{
+		id: z.number().describe("story id"),
+		text: z.string().describe("comment text"),
+	},
+	async ({ id, text }) => {
+		const comment = await shortcut(`/stories/${id}/comments`, {
+			method: "POST",
+			body: { text },
+			schema: StoryCommentSchema,
+		});
+		return textResult({
+			story_id: id,
+			comment_id: comment.id,
+			author: memberName(comment.author_id),
+			text: comment.text,
+			created_at: comment.created_at,
+		});
+	},
+);
+
+server.tool(
+	"update_story",
+	"Edit existing story fields: title, description, due_date (null clears), team (name or mention_name from list_workspace_vocabulary), or owners (list of mention_names; empty array clears all owners). Only provided fields change; omit a field to leave it as-is. Throws if the story id is not found, if the team is unknown, or if any owner mention_name is unknown. To change the workflow state, use move_story. At least one editable field must be provided. Returns the compact updated story.",
+	{
+		id: z.number().describe("story id"),
+		title: z.string().optional().describe("new title"),
+		description: z.string().optional().describe("new description body"),
+		due_date: z
+			.string()
+			.nullable()
+			.optional()
+			.describe("ISO 8601 timestamp; pass null to clear"),
+		team: z
+			.string()
+			.optional()
+			.describe("team name or mention_name from list_workspace_vocabulary"),
+		owners: z
+			.array(z.string())
+			.optional()
+			.describe("owner mention_names; empty array clears all owners"),
+	},
+	async ({ id, title, description, due_date, team, owners }) => {
+		const body: Record<string, unknown> = {};
+		if (title !== undefined) body.name = title;
+		if (description !== undefined) body.description = description;
+		if (due_date !== undefined) body.deadline = due_date;
+		if (team !== undefined) body.group_id = resolveTeam(team).id;
+		if (owners !== undefined) body.owner_ids = owners.map(resolveMemberId);
+		if (Object.keys(body).length === 0) {
+			throw new Error("update_story requires at least one field to change");
+		}
+		const story = await shortcut(`/stories/${id}`, {
+			method: "PUT",
+			body,
+			schema: StorySchema,
+		});
+		return textResult(compactStory(story));
 	},
 );
 

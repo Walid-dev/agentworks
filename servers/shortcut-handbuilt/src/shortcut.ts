@@ -73,6 +73,13 @@ export const GroupSchema = z.object({
 	mention_name: z.string(),
 });
 
+export const StoryCommentSchema = z.object({
+	id: z.number(),
+	text: z.string(),
+	author_id: z.string(),
+	created_at: z.string(),
+});
+
 export const StorySchema = z.object({
 	id: z.number(),
 	name: z.string(),
@@ -83,6 +90,7 @@ export const StorySchema = z.object({
 	owner_ids: z.array(z.string()),
 	requested_by_id: z.string(),
 	deadline: z.string().nullable(),
+	app_url: z.string(),
 	tasks: z.array(
 		z.object({
 			id: z.number(),
@@ -90,14 +98,7 @@ export const StorySchema = z.object({
 			complete: z.boolean(),
 		}),
 	),
-	comments: z.array(
-		z.object({
-			id: z.number(),
-			text: z.string(),
-			author_id: z.string(),
-			created_at: z.string(),
-		}),
-	),
+	comments: z.array(StoryCommentSchema),
 	story_links: z.array(
 		z.object({
 			id: z.number(),

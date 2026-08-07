@@ -49,6 +49,10 @@ overwrite — a session can contain several commits. Separate reports
 with a horizontal rule and use the commit hash as a heading. Each
 report contains, in this order:
 
+0. In plain words: what changed and why it matters, in two or three
+   sentences a non-technical reader would follow. No jargon, no file
+   paths, no command names. If it cannot be said plainly, say that
+   instead of writing something vague.
 1. The commit line, and which docs/PLAN.md step it belongs to.
 2. `git show --stat` for the commit.
 3. Decisions taken that the canon did not dictate, with reasoning, and

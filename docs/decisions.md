@@ -4,6 +4,17 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-06 — Workspace vocabulary (self, workflows, teams, members)
+  fetched once at startup and cached in module scope; startup fetch
+  failure is fatal (server exits before connecting) — freshness during
+  a session is not required for benchmark chores, and fatal-startup
+  surfaces token/network errors before an AI sees a half-working tool.
+  Trade-off: mid-session mutations by other clients (new team, added
+  state, invited member) are invisible until server restart.
+- 2026-08-06 — Zod validates Shortcut API responses where a missing or
+  renamed field would silently corrupt a result (anything returning ids
+  used for later writes); plain type assertions elsewhere — silent shape
+  drift is the real risk; a wrong shape that fails loudly self-reports.
 - 2026-08-04 — Finish line reframed: measured shrinking gap to Official,
   parity as stretch — official toolsets embed non-public knowledge; the
   defensible claim is quantified approach, not victory.

@@ -44,13 +44,12 @@ marked DONE only when the evidence named in it exists in the repo.
   Evidence: docs/CONVENTIONS.md, commit `e2f2abb`.
   Commit: `docs: define feat vs chore`
 
-### TODO
-
 - **0.6 Create the Shortcut workspace and API token.** Owner: W.
   Free workspace, generate an API token, put it in `.env` as
   `SHORTCUT_API_TOKEN`. Then remove that line from Pending in
   docs/decisions.md.
-  Evidence: the Pending line is gone from docs/decisions.md.
+  Evidence: the Shortcut token line is absent from Pending in
+  docs/decisions.md; the token lives in the local .env.
   Commit: `docs(decisions): resolve shortcut token item`
 
 - **0.7 Write the intent spec for the hand-built Shortcut toolset.**
@@ -69,7 +68,8 @@ marked DONE only when the evidence named in it exists in the repo.
   `@modelcontextprotocol/sdk`, stdio transport, with exactly one working
   tool from the spec. The package is born with its first working tool,
   never as an empty shell.
-  Evidence: the package exists and starts; one tool responds.
+  Evidence: servers/shortcut-handbuilt/src/index.ts, born with the
+  whoami tool responding against the live API.
   Commit: `feat(servers): add hand-built shortcut server with first tool`
 
 - **0.9a Build the read tools from the spec.** Owner: AI.
@@ -80,7 +80,8 @@ marked DONE only when the evidence named in it exists in the repo.
   One commit per tool or per small group. Each tool's description is
   written for a machine reader: what it does, when to use it, what it
   returns. Responses trimmed to the fields the chore needs.
-  Evidence: every read tool in the spec exists in the package.
+  Evidence: servers/shortcut-handbuilt (all ten tools) plus
+  docs/reports/shortcut-handbuilt-verification.md.
   Commit: `feat(servers): add <tool names> to hand-built shortcut server`
 
 - **0.9b Build the write tools from the spec.** Owner: AI.
@@ -89,8 +90,11 @@ marked DONE only when the evidence named in it exists in the repo.
   One commit per tool or per small group. Each tool's description is
   written for a machine reader: what it does, when to use it, what it
   returns. Responses trimmed to the fields the chore needs.
-  Evidence: every write tool in the spec exists in the package.
+  Evidence: servers/shortcut-handbuilt (all ten tools) plus
+  docs/reports/shortcut-handbuilt-verification.md.
   Commit: `feat(servers): add <tool names> to hand-built shortcut server`
+
+### TODO
 
 - **0.10 Verify the toolset inside a real AI assistant.** Owner: W.
   Register the server in Claude Code, then run the chores from the spec

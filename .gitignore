@@ -6,5 +6,4 @@ runs/*
 *.log
 .DS_Store
 STATUS.md
-REPORT.md
 *.tsbuildinfo

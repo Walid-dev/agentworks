@@ -49,31 +49,18 @@ seems useful.
   system is too, ask before choosing; a chosen default is a decision,
   and decisions belong to the human.
 
-## After every commit
-Append a report to REPORT.md at the repo root (gitignored). Never
-overwrite — a session can contain several commits. Separate reports
-with a horizontal rule and use the commit hash as a heading. Each
-report contains, in this order:
-
-0. Heading: the short hash AND the full commit line as the report title.
-1. In plain words: two or three sentences a non-technical reader follows.
-2. Which docs/PLAN.md step this belongs to, or "repo tooling".
-3. Decisions the canon did not dictate, with reasoning, and whether each
-   was logged. Write "none" only if literally nothing was chosen.
-4. Findings that contradicted an assumption.
-5. Untested paths, exhaustive.
-6. Verification: exact commands and raw output, but only for what this
-   commit changed. Lint and typecheck get one line, pass or fail, output
-   only on failure.
-7. Open questions.
-8. Files changed: the --stat list only. Full diffs live in git; include a
-   diff hunk inline only when a section above discusses it.
-
-In the conversation, print only a two-line summary: the commit line, and
-anything in sections 4, 5, or 7 that needs attention.
-
-Report what happened, not what was intended. Nothing is called verified
-without its output present in section 6. State uncertainty plainly.
+## Committing
+Write REPORT.md only when asked, and OVERWRITE it every time. Scope:
+unless a different scope is named, cover the work currently in flight —
+normally the docs/PLAN.md step being worked on, including all its
+commits, any uncommitted changes, and repo-tooling commits made along
+the way. Open the report by declaring the scope chosen: the step, then
+each covered commit as hash + full commit line. Sections: in plain
+words; plan step; decisions not dictated by the canon; findings that
+contradicted an assumption; untested paths, accumulated across the whole
+scope; verification with raw output only for what changed, lint and
+typecheck as one pass/fail line; open questions; files changed as --stat
+across the scope.
 
 ## Current state
 The current phase and the next step are in docs/PLAN.md: the first TODO

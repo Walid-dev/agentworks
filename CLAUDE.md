@@ -30,6 +30,12 @@ Full context load on demand: /agentworks
   Scripts that import workspace packages must live inside the package's
   directory — Node resolves modules by walking up from the script's
   location, so a script in /tmp cannot see the package's node_modules.
+- Every fact has exactly one owning document; everywhere else points at
+  it. Before writing a fact, ask which document owns it: goals ->
+  PROJECT.md, architecture and stack -> STACK.md, working rules ->
+  CONVENTIONS.md, choices -> decisions.md, steps and progress ->
+  PLAN.md. Never restate a fact that changes over time; link to its
+  owner.
 
 ## Proposing work
 Before proposing any action, state which document authorizes it (file and

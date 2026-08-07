@@ -55,24 +55,19 @@ overwrite — a session can contain several commits. Separate reports
 with a horizontal rule and use the commit hash as a heading. Each
 report contains, in this order:
 
-0. In plain words: what changed and why it matters, in two or three
-   sentences a non-technical reader would follow. No jargon, no file
-   paths, no command names. If it cannot be said plainly, say that
-   instead of writing something vague.
-1. The commit line, and which docs/PLAN.md step it belongs to.
-2. `git show --stat` for the commit.
-3. Decisions taken that the canon did not dictate, with reasoning, and
-   whether each was logged in docs/decisions.md.
-4. Findings: anything the live API, tooling, or code revealed that
-   contradicted an assumption.
-5. Untested paths: code written but never executed, and what would
-   exercise it. Be exhaustive; this section is the one most likely to be
-   under-reported.
-6. Verification: the exact commands run and their raw output. Never
-   summarise output a reader would want to see.
-7. Open questions: anything decided by default that a human should
-   confirm.
-8. `git show` for the commit, excluding pnpm-lock.yaml.
+0. Heading: the short hash AND the full commit line as the report title.
+1. In plain words: two or three sentences a non-technical reader follows.
+2. Which docs/PLAN.md step this belongs to, or "repo tooling".
+3. Decisions the canon did not dictate, with reasoning, and whether each
+   was logged. Write "none" only if literally nothing was chosen.
+4. Findings that contradicted an assumption.
+5. Untested paths, exhaustive.
+6. Verification: exact commands and raw output, but only for what this
+   commit changed. Lint and typecheck get one line, pass or fail, output
+   only on failure.
+7. Open questions.
+8. Files changed: the --stat list only. Full diffs live in git; include a
+   diff hunk inline only when a section above discusses it.
 
 In the conversation, print only a two-line summary: the commit line, and
 anything in sections 4, 5, or 7 that needs attention.

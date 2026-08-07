@@ -45,11 +45,7 @@ for (const m of MEMBERS) {
 
 const FIRST_WORKFLOW = WORKFLOWS[0];
 if (!FIRST_WORKFLOW) throw new Error("no workflows found at startup");
-const DEFAULT_STATE = FIRST_WORKFLOW.states
-	.slice()
-	.sort((a, b) => a.position - b.position)[0];
-if (!DEFAULT_STATE) throw new Error("workflow has no states");
-const DEFAULT_STATE_ID = DEFAULT_STATE.id;
+const DEFAULT_STATE_ID = FIRST_WORKFLOW.default_state_id;
 
 function stateName(id: number): string {
 	return STATE_NAME_BY_ID.get(id) ?? `unknown-state(${id})`;
@@ -60,6 +56,15 @@ function teamName(id: string | null): string | null {
 }
 function memberName(id: string): string {
 	return MENTION_BY_ID.get(id) ?? id;
+}
+
+// story_link verbs read left-to-right: subject <verb> object. For the
+// object-side view we invert so the returned sentence still reads
+// "this story <verb> other".
+function invertVerb(verb: string): string {
+	if (verb === "blocks") return "blocked by";
+	if (verb === "duplicates") return "duplicated by";
+	return verb;
 }
 
 const PAGE_SIZE = 25;
@@ -152,8 +157,8 @@ function fullStory(s: Story) {
 			created_at: c.created_at,
 		})),
 		story_links: s.story_links.map((l) => ({
-			verb: l.verb,
-			other_story_id: l.subject_id === s.id ? l.object_id : l.subject_id,
+			verb: l.type === "subject" ? l.verb : invertVerb(l.verb),
+			other_story_id: l.type === "subject" ? l.object_id : l.subject_id,
 		})),
 	};
 }
@@ -284,7 +289,7 @@ server.tool(
 
 server.tool(
 	"create_story",
-	"Create a new story in a single atomic call. Shortcut accepts tasks and one linked story inline with the create, so there is no multi-step orchestration and no partial-success state: the whole story lands or nothing does. Team is required (name or mention_name from list_workspace_vocabulary); throws with the list of valid teams if unknown. State is case-insensitive against workflow state names and defaults to the workflow's first state if omitted; throws with valid state names if the provided name is unknown. By default the caller is set as both owner and requester; pass set_me_as_owner or set_me_as_requester false to disable. Returns the compact new story: id, title, state, team, due_date, url.",
+	"Create a new story in a single atomic call. Shortcut accepts tasks and one linked story inline with the create, so there is no multi-step orchestration and no partial-success state: the whole story lands or nothing does. Team is required (name or mention_name from list_workspace_vocabulary); throws with the list of valid teams if unknown. State is case-insensitive against workflow state names and defaults to the workflow's configured default state if omitted; throws with valid state names if the provided name is unknown. Linked_story creates a link where the new story is the subject and other_story_id is the object: `{verb: 'blocks', other_story_id: X}` means the new story blocks X; `{verb: 'duplicates', other_story_id: X}` means the new story duplicates X; `{verb: 'relates to', other_story_id: X}` is symmetric. By default the caller is set as both owner and requester; pass set_me_as_owner or set_me_as_requester false to disable. Returns the compact new story: id, title, state, team, due_date, url.",
 	{
 		title: z.string().describe("story title"),
 		team: z

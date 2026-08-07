@@ -8,7 +8,11 @@ One line per decision: date — decision — why. Newest on top.
   the linked story inline; Shortcut accepts both as arguments to the
   create call — verified against the live API — so the tool has no
   multi-step path and no partial-success state. If the create fails,
-  nothing lands; if it succeeds, the whole story lands. A tool that
+  nothing lands; if it succeeds, the whole story lands. Atomicity probe
+  (2026-08-07): POST with a valid title and tasks but a story_link
+  pointing at object_id 999999 returned HTTP 422 with
+  `{"message":"Invalid param: object_id=|999999|"}`; the VERIFY-search
+  total was 0 before and 0 after the call — nothing landed. A tool that
   half-succeeds and reports success would teach the model something
   false, so avoiding that state entirely is preferable to detecting and
   reporting it.

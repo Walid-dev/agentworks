@@ -64,6 +64,7 @@ export const WorkflowStateSchema = z.object({
 export const WorkflowSchema = z.object({
 	id: z.number(),
 	name: z.string(),
+	default_state_id: z.number(),
 	states: z.array(WorkflowStateSchema),
 });
 
@@ -105,6 +106,7 @@ export const StorySchema = z.object({
 			verb: z.string(),
 			object_id: z.number(),
 			subject_id: z.number(),
+			type: z.enum(["subject", "object"]),
 		}),
 	),
 });

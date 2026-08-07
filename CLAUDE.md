@@ -65,5 +65,5 @@ Report what happened, not what was intended. Nothing is called verified
 without its output present in section 6. State uncertainty plainly.
 
 ## Current state
-Phase 0. Active package: packages/agent (bare tool-use loop).
-Exact status: `git log --oneline -10` plus Pending in docs/decisions.md.
+The current phase and the next step are in docs/PLAN.md: the first TODO
+step in order. Recent work: `git log --oneline -10`.

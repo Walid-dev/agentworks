@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .env
+mcp-exam-*.json
 runs/*
 !runs/.gitkeep
 *.log

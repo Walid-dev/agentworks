@@ -27,6 +27,9 @@ Full context load on demand: /agentworks
   tool's spec or the report.
 - Always include the exact verification command in the final response,
   copy-pasteable, reading secrets from .env rather than inlining them.
+  Scripts that import workspace packages must live inside the package's
+  directory — Node resolves modules by walking up from the script's
+  location, so a script in /tmp cannot see the package's node_modules.
 
 ## Proposing work
 Before proposing any action, state which document authorizes it (file and

@@ -30,6 +30,8 @@ Full context load on demand: /agentworks
   Scripts that import workspace packages must live inside the package's
   directory — Node resolves modules by walking up from the script's
   location, so a script in /tmp cannot see the package's node_modules.
+- Claims bind at commit time; the index is a workbench. Staged content
+  may anticipate the commit that makes it true.
 - Facts that change over time have exactly one owning document;
   everywhere else points at it. Before writing such a fact, ask which
   document owns it: goals -> PROJECT.md, architecture and stack ->

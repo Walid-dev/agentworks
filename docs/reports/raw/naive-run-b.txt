@@ -1,0 +1,32 @@
+❯ Create a story called Fix login timeout for my team, assign it to me, with three tasks: reproduce, fix, verify. Due Friday
+
+  Called shortcut-naive 2 times (ctrl+o to expand)
+
+⏺ Creating the story with member ID as owner, team as group, tasks inline, and Friday 2026-08-14 as deadline.
+
+  Called shortcut-naive (ctrl+o to expand)
+  Called shortcut-naive 2 times (ctrl+o to expand)
+
+⏺ Created sc-54: Fix login timeout
+  - Owner: Walid Hl
+  - Team: Walid Hl's Team
+  - Deadline: Fri 2026-08-14
+  - Tasks: Reproduce, Fix, Verify
+
+✻ Crunched for 35s
+
+❯ Move that story to in progress
+
+  Called shortcut-naive (ctrl+o to expand)
+
+⏺ sc-54 moved to In Progress.
+
+✻ Sautéed for 8s
+
+❯ Update its description with: happens only on Safari, cache-related.
+
+  Called shortcut-naive (ctrl+o to expand)
+
+⏺ Description updated on sc-54.
+
+✻ Sautéed for 4s

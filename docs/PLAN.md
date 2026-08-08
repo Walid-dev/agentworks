@@ -101,23 +101,25 @@ marked DONE only when the evidence named in it exists in the repo.
   Evidence: docs/reports/handbuilt-first-run.md.
   Commit: `docs(reports): record hand-built toolset verification`
 
-### TODO
-
 - **0.11 Produce the naive baseline.** Owner: AI.
   Pick one existing OpenAPI-to-MCP converter, pin its exact version,
   point it at Shortcut's public spec, and save the raw generated output
   under `servers/naive/`. No editing of the output; the point is what
   the shortcut actually produces.
-  Evidence: `servers/naive/` contains the generated server; the
-  converter name and version are recorded in docs/decisions.md.
+  Evidence: servers/naive/ contains the generated server;
+  docs/reports/naive-converter-survey.md records the converter
+  selection; the converter name and version are recorded in
+  docs/decisions.md.
   Commit: `feat(servers): add naive baseline from <converter> <version>`
 
 - **0.12 Try the same chores against the naive server.** Owner: W.
   Register the naive server in Claude Code and attempt the same chores
   from step 0.10. Record what happened, especially wrong tool choices,
   confusion, and dead ends.
-  Evidence: docs/reports/naive-first-run.md.
+  Evidence: docs/reports/naive-first-run.md plus docs/reports/raw/.
   Commit: `docs(reports): record naive baseline session`
+
+### TODO
 
 - **0.13 Write the comparison.** Owner: AI drafts, W reviews and edits.
   Short report contrasting the two toolsets using the two session

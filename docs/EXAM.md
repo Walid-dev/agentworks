@@ -51,6 +51,14 @@ their order; wrong turns and retries; clarifying questions asked;
 anything slow or confusing; ids of anything created. Created stories
 stay in place until the report is written; they are evidence.
 
+If a session cannot be captured in full, record the gap explicitly;
+never reconstruct.
+
+Record the driver model whenever the interface reveals it; the Phase 1
+runtime pins it explicitly. Session logs under `~/.claude/projects/`
+are the recovery path for call-level detail; prefer recovering the
+tape over re-running the exam.
+
 Notes become docs/reports/<target>-first-run.md.
 
 ## Purity rules
@@ -61,6 +69,7 @@ Notes become docs/reports/<target>-first-run.md.
   sessions ("recalled N memories"), note it: remembered context
   contaminates comparison between runs. The Phase 1 runtime must start
   amnesiac every attempt.
-- The seeded stories (ids 17 to 30) are fixtures. Exams may read them
-  and comment on them; bulk cleanup happens only after the comparison
-  report exists.
+- Every exam starts from the documented baseline state (see the latest
+  report's baseline list). Artifacts an exam creates are documented in
+  its report, then removed: the course resets between cars. The
+  workspace is a lab bench; reports are the archive.

@@ -132,8 +132,9 @@ marked DONE only when the evidence named in it exists in the repo.
 
 - **0.14 Close the phase.** Owner: W.
   Confirm the exit criterion is met: the hand-made toolset works inside
-  a real AI assistant, and the written comparison explains why it beats
-  the naive one. Tag the commit `phase-0`. Then write the Phase 1 step
+  a real AI assistant, and a written comparison characterizes, with
+  evidence, how it differs from the naive conversion and what Phase 1
+  must measure. Tag the commit `phase-0`. Then write the Phase 1 step
   list into this file, informed by what steps 0.10 to 0.13 revealed.
   Evidence: the `phase-0` tag exists and this file contains a Phase 1
   step list.

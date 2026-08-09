@@ -149,7 +149,7 @@ Phases end when their exit test is passed, not when the calendar says so. Total 
 
 Build a tiny AI agent completely from scratch, no frameworks, so its inner workings are fully understood. Hand-craft one small, excellent toolset for the chosen test software. Run an existing naive converter and study its weaknesses closely.
 
-**Exit:** the hand-made toolset works inside a real AI assistant, and a short written comparison explains why it beats the naive one.
+**Exit:** the hand-made toolset works inside a real AI assistant, and a written comparison characterizes, with evidence, how it differs from the naive conversion and what Phase 1 must measure.
 
 ### Phase 1. The measuring instrument (3 to 4 weeks)
 

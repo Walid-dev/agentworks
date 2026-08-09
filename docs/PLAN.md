@@ -119,6 +119,17 @@ marked DONE only when the evidence named in it exists in the repo.
   Evidence: docs/reports/naive-first-run.md plus docs/reports/raw/.
   Commit: `docs(reports): record naive baseline session`
 
+- **0.14 Close the phase.** Owner: W.
+  Confirm the exit criterion is met: the hand-made toolset works inside
+  a real AI assistant, and a written comparison characterizes, with
+  evidence, how it differs from the naive conversion and what Phase 1
+  must measure. Tag the commit `phase-0`. Then write the Phase 1 step
+  list into this file, informed by what steps 0.10 to 0.13 revealed.
+  Evidence: the exit-criterion check (Part A) confirms all three
+  amended clauses are met against docs/reports/handbuilt-first-run.md
+  and docs/reports/handbuilt-vs-naive.md.
+  Commit: `docs(plan): close phase 0 and plan phase 1`
+
 ### TODO
 
 - **0.13 Write the comparison.** Owner: AI drafts, W reviews and edits.
@@ -130,19 +141,167 @@ marked DONE only when the evidence named in it exists in the repo.
   Evidence: docs/reports/handbuilt-vs-naive.md.
   Commit: `docs(reports): compare hand-built and naive toolsets`
 
-- **0.14 Close the phase.** Owner: W.
-  Confirm the exit criterion is met: the hand-made toolset works inside
-  a real AI assistant, and a written comparison characterizes, with
-  evidence, how it differs from the naive conversion and what Phase 1
-  must measure. Tag the commit `phase-0`. Then write the Phase 1 step
-  list into this file, informed by what steps 0.10 to 0.13 revealed.
-  Evidence: the `phase-0` tag exists and this file contains a Phase 1
-  step list.
-  Commit: `docs(plan): close phase 0 and plan phase 1`
+---
+
+## Phase 1 — The measuring instrument
+
+The measuring instrument, built spec-first. Every attempt is amnesiac
+per chore; every call is recorded; graders verify against ground truth
+in the live workspace, deterministically. LLM-as-judge is out of scope
+for Phase 1. Tasks and harness are AI-authored under human review, same
+provenance disclosure as the curated toolset.
+
+### DONE
+
+*(none yet — populated as each step lands)*
+
+### TODO
+
+- **1.1 Write the golden-task format spec.** Owner: W.
+  Format follows `docs/specs/agent-loop.md`: Intent, What it does,
+  Boundaries, Done when. Defines the YAML shape for a golden task:
+  phrasing (with pinned timezone where relevant), expected tool names
+  (candidates), grader block (deterministic checks against Shortcut
+  ground truth), tolerance declarations (casing, date-window), and
+  the disclosure that tasks are AI-authored under human review. No code.
+  Evidence: `docs/specs/golden-task-format.md`.
+  Commit: `docs(specs): add golden-task format spec`
+
+- **1.2 Write the harness spec.** Owner: W.
+  Format matches 1.1. Defines the harness runtime: per-chore
+  isolation, driver pinning at attempt-time, full call logging
+  (name / input / output / timestamp per call), transcript to JSONL
+  under `runs/`, metrics to `runs/bench.sqlite`. Two agent runtimes:
+  bare loop (from `packages/agent`) and Agent-SDK lane (optional).
+  Excludes LLM-as-judge. No code.
+  Evidence: `docs/specs/harness.md`.
+  Commit: `docs(specs): add harness intent spec`
+
+- **1.3 Write 3 pilot golden tasks by hand.** Owner: W.
+  Three tasks written to the format from 1.1, drawn from the Phase 1
+  candidates in `handbuilt-vs-naive.md §8`: one that exercises the
+  type-vs-name trap; one write-chore that pins timezone in phrasing
+  (deadline test from §5b); one that probes information loss vs
+  coordination cost. Each with its deterministic grader block.
+  Evidence: `tasks/pilot-*.yaml` — three files, zod-validated against
+  the format spec.
+  Commit: `feat(tasks): add three pilot golden tasks`
+
+- **1.4 Build the golden-task loader with zod validation.** Owner: AI.
+  Minimal package `packages/harness` that reads the pilot YAMLs from
+  1.3 and validates them against a zod schema derived from the 1.1
+  spec. Loader only; no runner yet.
+  Evidence: `pnpm --filter @agentworks/harness dev tasks/pilot-*.yaml`
+  loads and prints all three; invalid YAML fails loudly.
+  Commit: `feat(harness): add golden-task loader with zod validation`
+
+- **1.5 Build the runner against the bare loop.** Owner: AI.
+  Extend `packages/harness` to run one golden task once against one
+  MCP server, using the bare loop from `packages/agent` as the agent
+  runtime. Per-attempt: log every tool call to JSONL under
+  `runs/<timestamp>-<task>/`; record driver id, server id,
+  timestamps, token counts (from Anthropic API `usage`). No graders
+  yet. **Pin the `dev` driver id (used for Phase 1 iteration) and the
+  `official` driver id (whose numbers appear in Report #1) here as
+  their first actual use, per STACK.md's pin-at-first-use rule; both
+  recorded as one-liners in `docs/decisions.md`.**
+  Evidence: one pilot task run against `servers/shortcut-handbuilt`
+  produces a JSONL transcript in the expected shape; two new
+  decisions.md lines pinning `dev` and `official` driver ids by exact
+  string.
+  Commit: `feat(harness): add per-task runner with full call logging`
+
+- **1.6 Build the deterministic grader base.** Owner: AI.
+  Minimal grader that reads a JSONL transcript + a golden task's
+  grader block and returns pass/fail per task, plus derived
+  measurements: task-success (verified against Shortcut REST as
+  ground truth), tool-selection accuracy against expected tool names,
+  tool-calls-per-task, tokens in/out, wall-clock latency (within same
+  transport), invalid tool calls (nonexistent name or arg-schema
+  breakage). Casing and date-window tolerances honored per task
+  declaration. **Isolation inside the harness (course-reset applied
+  per attempt): each repetition uses unique story identifiers and
+  tears down its own created artifacts between attempts; the
+  workspace must match the documented baseline before the next
+  attempt begins. Teardown verification is required evidence, not
+  assumed.**
+  Evidence: run all three pilot tasks × two lanes (curated, naive) ×
+  three repetitions per lane; grader produces per-attempt pass/fail
+  and per-task-per-lane aggregates; **plus a teardown-verification
+  log showing the workspace at the end of each attempt matches the
+  documented baseline before the next attempt starts.** Committed as
+  raw JSONL + a small SQLite file under `runs/`.
+  Commit: `feat(harness): add deterministic graders with course-reset isolation`
+
+- **1.7 Pilot review and format lock.** Owner: W.
+  Read the three pilot runs' outputs. Confirm the golden-task format
+  and the harness produce the intended discrimination: chores in the
+  §8 categories separate curated from naive on at least one measured
+  axis. If they do not, revise the format spec (1.1) or the graders
+  (1.6) before mass authoring. This is the gate before scaling from 3
+  to ~20 tasks.
+  Evidence: `docs/reports/phase1-pilot-review.md`, ending with an
+  explicit "format locked" line or a list of revisions and the follow-up
+  commits landing them.
+  Commit: `docs(reports): lock phase 1 golden-task and harness format`
+
+- **1.8 Author the full golden-task set (20 to 25 tasks).** Owner: AI.
+  Author the remaining golden tasks per the locked format, covering
+  every §8 candidate class. Each task's grader block deterministic
+  against Shortcut ground truth; tolerances declared explicitly.
+  Disclosure: tasks are AI-authored under human review, per the same
+  provenance line the curated toolset carries.
+  Evidence: `tasks/*.yaml` — 20 to 25 files total (pilots included),
+  all zod-validating.
+  Commit: `feat(tasks): add remaining phase 1 golden tasks`
+
+- **1.9 Run the two-lane sweep and produce Benchmark Report #1
+  (curated vs naive).** Owner: AI.
+  Full sweep on the two local stdio lanes only: every golden task ×
+  two lanes (curated, naive) × N repetitions × two driver tiers
+  (`official` from step 1.5 for the numbers in the report; `smoke`
+  for the sanity sweep and the cheap-tier axis). **Pin the `smoke`
+  driver id here as its first actual use, per STACK.md's
+  pin-at-first-use rule; recorded in `docs/decisions.md`.** Compare
+  the two lanes across the metric set in `docs/STACK.md` "Metrics".
+  No verdict beyond what the numbers say; the report is the numbers.
+  Evidence: `docs/reports/benchmark-1.md` plus `runs/bench.sqlite`;
+  one new decisions.md line pinning the `smoke` driver id.
+  Commit: `docs(reports): benchmark report 1`
+
+- **1.10 Add the official Shortcut MCP as a third lane and reissue.**
+  Owner: AI.
+  The official Shortcut MCP is an **external boundary** — a remote
+  server we do not control — so it gets its own step. A connection
+  failure cannot block the headline report from 1.9. Wire the remote
+  server over the streamable-HTTP transport in
+  `@modelcontextprotocol/sdk`; no editing on the official side.
+  **Connectivity/auth verify gate: the harness must successfully
+  connect, list tools, and complete one read call against the
+  official server before any sweep runs.** Then re-run the full
+  sweep across all three lanes (curated, naive, official) at the
+  same tier settings as 1.9, and produce a reissued report.
+  Evidence: `docs/reports/benchmark-1-with-official.md` plus the
+  reissued `runs/bench.sqlite`; server identity and version (as
+  surfaced by the remote) recorded in `docs/decisions.md`.
+  Commit: `docs(reports): benchmark report 1 with official lane`
+
+- **1.11 Close Phase 1.** Owner: W.
+  Confirm the exit criterion is met: Benchmark Report #1 (the
+  two-lane report from 1.9) exists, with real numbers, and the
+  format is stable enough to run again on the monthly upgrade day.
+  The official-lane reissue from 1.10 is a **bonus, not a gate** —
+  its presence or absence does not affect phase closure. Tag
+  `phase-1`. Draft the Phase 2 step list into this file, informed by
+  what Report #1 revealed and the pending refiner-aggressiveness
+  axis (see `docs/decisions.md` 2026-08-08).
+  Evidence: the `phase-1` tag exists and this file contains a
+  Phase 2 step list.
+  Commit: `docs(plan): close phase 1 and plan phase 2`
 
 ---
 
-## Phase 1 and later
+## Phase 2 and later
 
 Planned at each phase gate, not before. The phase goals and exit
 criteria live in docs/PROJECT.md.

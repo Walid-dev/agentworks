@@ -29,6 +29,96 @@ Experts building those dashboards by hand cannot keep up with the amount of soft
 
 The Examiner is the most valuable part. It turns opinions ("this looks good") into facts ("this succeeds 85 percent of the time, at half the cost").
 
+## Who uses this, in concrete terms
+
+Three products could be built on this project's engine. One is what
+Phase 1 builds; two are candidate futures, chosen or not at the Phase 1
+gate with Benchmark Report #1 in hand. Each is described below as a
+single real user on a single day. Status is marked plainly so this
+section is not mistaken for a promise.
+
+### The Examiner — a quality gate for agent toolsets
+
+**Status: this is what Phase 1 builds. Grounded in work already done.**
+
+Sofia runs the platform team at a 40-person company. Their support agent
+reaches an internal ticketing system through an MCP toolset built months
+ago that nobody fully remembers. It mostly works, and every model update
+makes the team nervous.
+
+Her boss says the model they depend on is being retired; they switch next
+Friday. Will the agent still work? Today the honest answer is "we'll find
+out from customers."
+
+Instead: she writes fifteen real tasks in plain files — "create a ticket
+titled X for customer Y", "find all urgent open tickets" — each with an
+automatic check for whether it truly happened. She runs one command
+against today's model and gets numbers: how many succeeded, how many
+steps each took, what it cost. Friday she runs the identical set against
+the new model. The score drops, and the report names exactly which tasks
+broke and shows each failed attempt. She fixes one confusing tool
+description, reruns, the score recovers, and she ships the switch with a
+before-and-after table. She now runs that twenty-minute check on every
+model update and every API change.
+
+Why she uses it: agents need to be re-checked constantly, and she had no
+way to do it except in production. Checking is recurring; that is the
+durable need.
+
+### The refiner — turning a raw conversion into a good toolset
+
+**Status: candidate for Phase 2. Not built. Decided at the Phase 1 gate.**
+
+Marcus builds an AI assistant for dental clinics on top of a booking
+system's API. On day one he runs an off-the-shelf converter, gets over a
+hundred tools, wires them in, and the assistant is slow, wrong, and
+expensive — it books the wrong slots and wastes money reading bloated
+responses.
+
+He points this tool at his setup. It reads the hundred-plus tools and the
+API's documentation, then decides: it merges the booking endpoints into
+one "book appointment" tool, drops the dozens of admin endpoints no
+receptionist task needs, rewrites the descriptions so an AI picks the
+right tool, and trims the responses. Out comes a 14-tool version. Then
+the part that makes it more than a guess: the Examiner runs his tasks
+against both the old and new versions and prints the difference — success
+up, cost down, with the numbers attached. He ships the smaller version
+knowing it is better, not hoping.
+
+Why he uses it: anyone can ask an AI to prune a tool list, but he gets
+proof the pruning helped, which he could not produce himself.
+
+### The website examiner — can agents actually use your site
+
+**Status: candidate future (PROJECT.md Future directions). Not built. The
+harder surface; sequenced last on purpose.**
+
+Amira manages an online shop. Agent-driven purchases are becoming a real
+sales channel, and her CEO asks whether AI agents can actually buy from
+their site. Nobody knows.
+
+She enters the site's address and picks tasks from a menu: find a product
+by a feature, add it to the cart, apply a discount code, check out as a
+guest. Agents attempt each task repeatedly while everything is recorded.
+The report: most tasks succeed, but checkout fails every time because the
+discount field cannot be reached the way an agent navigates — with a
+recording of the agent getting stuck. She files one fix, reruns,
+checkout passes, and she schedules the check monthly so problems are
+caught before they cost sales.
+
+Why she uses it: agent-readiness is becoming what mobile-readiness once
+was, and she cannot see her own site through an agent's eyes. This runs
+on the same engine as Sofia's product, pointed at a harder surface with
+no clean source of truth — which is why the plan builds the engine on a
+controlled system first and turns to websites only once it is proven.
+
+---
+
+These three share one engine: real tasks, attempted repeatedly, recorded,
+graded pass or fail against reality, compared over time. The project
+builds that engine first. Which product it powers next is decided with
+evidence, not conviction.
+
 ## How we prove it works
 
 One comparison, repeated throughout the project. The same tasks, three toolsets:
@@ -101,7 +191,7 @@ Public release: a clean command-line tool anyone can run, and the essay: what ha
 
 ## Future directions (parked on purpose)
 
-- **The web version.** The same Examiner pointed at websites: can AI agents actually complete purchases and bookings there? That market is forming now; we arrive later holding the engine everyone else lacks.
+- **The web version.** Described in full above as the website-examiner persona (Amira); see "Who uses this, in concrete terms."
 - **A browser-standard output.** Emerging standards let websites offer tools to AI directly in the browser. Our Designer could produce those too: same engine, new body.
 - **A testing service.** Companies adopting AI need continuous proof their setups still work after every model update. The Examiner is that product.
 - **A public leaderboard.** Scoring the official toolsets of popular software: a reputation asset nobody can unpublish.

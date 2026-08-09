@@ -77,4 +77,12 @@ One line per decision: date — decision — why. Newest on top.
   is an Examiner measurement, not a decision to make in advance.
 - Embeddings provider — Phase 2 gate (Voyage vs OpenAI).
 - OpenAI cross-model lane — Phase 3 gate.
+- Target-spec quality is an unmeasured variable. Phase 0 used Shortcut's
+  professionally-maintained OpenAPI spec — near-ideal converter input.
+  Hypothesis (2026-08-08): a messier small-company spec widens the
+  curated-vs-naive gap (worse converter input) but may also degrade the
+  curated lane's raw material; net direction unknown. Phase 3's second
+  target should include a lower-quality spec to test generalization.
+  Not a Phase 1 concern; logged so the single-target result is not
+  over-read.
 - License — decide at Phase 4 with publication.

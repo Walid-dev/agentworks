@@ -60,6 +60,15 @@ One line per decision: date — decision — why. Newest on top.
 ## Pending
 
 - Claude plan tier — leaning Pro; confirm against real usage after Phase 1.
+- Phase 2 direction — refiner aggressiveness.
+  2026-08-08 — Refiner aggressiveness is a design axis, not a fixed
+  choice: the refiner (option a) should expose how much it reshapes the
+  naive toolset, from aggressive prune (many tools dropped) through
+  keep-all-and-improve (every endpoint kept, descriptions and responses
+  fixed) to keep-all-and-organize (all kept, grouped so the common set
+  is small with the long tail reachable). User preference for coverage
+  vs simplicity is a setting. Which setting wins for which task profile
+  is an Examiner measurement, not a decision to make in advance.
 - Embeddings provider — Phase 2 gate (Voyage vs OpenAI).
 - OpenAI cross-model lane — Phase 3 gate.
 - License — decide at Phase 4 with publication.

@@ -163,8 +163,6 @@ provenance disclosure as the curated toolset.
   Evidence: `docs/specs/golden-task-format.md`.
   Commit: `docs(specs): add golden-task format spec`
 
-### TODO
-
 - **1.2 Write the harness spec.** Owner: W.
   Format matches 1.1. Defines the harness runtime: per-chore
   isolation, driver pinning at attempt-time, full call logging
@@ -174,6 +172,8 @@ provenance disclosure as the curated toolset.
   Excludes LLM-as-judge. No code.
   Evidence: `docs/specs/harness.md`.
   Commit: `docs(specs): add harness intent spec`
+
+### TODO
 
 - **1.3 Write 3 pilot golden tasks by hand.** Owner: W.
   Three tasks written to the format from 1.1, drawn from the Phase 1

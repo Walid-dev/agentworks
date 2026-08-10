@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 mcp-exam-*.json
+packages/harness/lanes.json
 runs/*
 !runs/.gitkeep
 *.log

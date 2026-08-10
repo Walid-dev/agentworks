@@ -204,8 +204,6 @@ provenance disclosure as the curated toolset.
   Evidence: `docs/specs/graders.md`.
   Commit: `docs(specs): add graders spec`
 
-### TODO
-
 - **1.6 Build the runner against the bare loop.** Owner: AI.
   Extend `packages/harness` to run one golden task once against one
   MCP server, using the bare loop from `packages/agent` as the agent
@@ -216,11 +214,14 @@ provenance disclosure as the curated toolset.
   `official` driver id (whose numbers appear in Report #1) here as
   their first actual use, per STACK.md's pin-at-first-use rule; both
   recorded as one-liners in `docs/decisions.md`.**
-  Evidence: one pilot task run against `servers/shortcut-handbuilt`
-  produces a JSONL transcript in the expected shape; two new
-  decisions.md lines pinning `dev` and `official` driver ids by exact
-  string.
-  Commit: `feat(harness): add per-task runner with full call logging`
+  Evidence: `packages/harness/src/attempt.ts` plus `runtime.ts`,
+  `baseline.ts`, `setup.ts`, `teardown.ts`, `logger.ts`, `lanes.ts`;
+  the passing verification transcript at
+  `runs/2026-08-10T21-18-33-388Z/state-name-vs-type/shortcut-handbuilt/2026-08-10T21-18-33-388Z.jsonl`;
+  the `2026-08-10` headline-driver line in `docs/decisions.md`
+  pinning `claude-sonnet-4-6` (dev tier already pinned 2026-08-03).
+
+### TODO
 
 - **1.7 Build the deterministic grader base.** Owner: AI.
   Implement the grader contract from 1.5. Reads a JSONL transcript +

@@ -32,6 +32,12 @@ importers:
 
   packages/harness:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.115.0
+        version: 0.115.0(zod@4.4.3)
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.30.0
+        version: 1.30.0(zod@4.4.3)
       commander:
         specifier: ^12.1.0
         version: 12.1.0

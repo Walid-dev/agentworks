@@ -1,0 +1,22 @@
+{
+	"lanes": {
+		"shortcut-handbuilt": {
+			"id": "shortcut-handbuilt",
+			"command": "npx",
+			"args": [
+				"tsx",
+				"--env-file=<absolute-path-to-repo>/.env",
+				"<absolute-path-to-repo>/servers/shortcut-handbuilt/src/index.ts"
+			],
+			"env": {}
+		},
+		"shortcut-naive": {
+			"id": "shortcut-naive",
+			"command": "npx",
+			"args": ["tsx", "<absolute-path-to-repo>/servers/naive/src/index.ts"],
+			"env": {
+				"API_KEY_API_TOKEN": "paste-your-shortcut-token-here"
+			}
+		}
+	}
+}

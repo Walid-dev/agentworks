@@ -4,6 +4,23 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-10 — Headline driver id pinned at 1.6 first use:
+  `claude-sonnet-4-6`. Same string as the dev tier pinned on 2026-08-03,
+  so Phase 1 dev iteration and Report #1 numbers land under one model
+  id. Disclosure: Phase 0 hand exams (0.10, 0.12) ran under
+  `claude-opus-4-7` — a different model family — so Phase 0 evidence
+  is not comparable to Phase 1 numbers on the driver axis. The
+  `official` tier for Report #1 is the same string as `dev` until an
+  independent choice at 1.10 says otherwise.
+- 2026-08-10 — Harness first run surfaced curated-lane brittleness:
+  strict boundary validation failed on soft-deleted comments
+  (text: null), pre-registered in naive-first-run.md; the naive lane is
+  immune by construction (no validation). Ledger entry against the
+  curated lane: validation trades robustness-to-unseen-shapes for
+  correctness guarantees. Fixed post-phase-0 (server freeze expired
+  with the 0.13 commit); disclosed for Report #1. First-catch
+  transcript retained at
+  runs/2026-08-10T20-32-03-284Z/state-name-vs-type/shortcut-handbuilt/2026-08-10T20-32-03-284Z.jsonl.
 - 2026-08-08 — Phase 0 exit reworded from "explains why it beats the
   naive one" to "characterizes, with evidence, how it differs and what
   Phase 1 must measure" — hand exams produce leads, not verdicts; the

@@ -1,0 +1,24 @@
+id: create-with-pinned-deadline
+class: write
+prompt: >
+  Create a story called "Deadline probe {{run}}" for my team, story
+  type chore, assign it to me, due 2026-08-21 end of day Toronto time.
+expected_tools:
+  shortcut-handbuilt: [create_story]
+grade:
+  - story_exists:
+      title: "Deadline probe {{run}}"
+      story_type: chore
+      owner_is_self: true
+      team: "Walid Hl's Team"
+      deadline_within: { date: "2026-08-21", timezone: "America/Toronto" }
+tolerances:
+  casing: insensitive
+  date_window: { timezone: "America/Toronto" }
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §5b. The same word "Friday"
+  produced payload instants 28 hours apart across lanes; this task pins
+  the date and timezone in the phrasing and grades within the calendar
+  day, per the §8 tolerance requirement. {{run}} keeps repetitions from
+  colliding.

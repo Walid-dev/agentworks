@@ -1,0 +1,18 @@
+id: state-name-vs-type
+class: state-trap
+prompt: >
+  Which stories are in the In Progress column right now? Reply with
+  just the story ids, comma-separated.
+expected_tools:
+  shortcut-handbuilt: [list_my_stories, list_team_stories]
+grade:
+  - answer_ids: { equals_state: "In Progress" }
+  - workspace_unchanged: true
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §4a. Naive sessions resolved
+  "working on" through a type filter (state:started) and swept In
+  Review stories in, 2/2 sessions; curated 0/2. The answer key is
+  computed live from Shortcut at grading time.

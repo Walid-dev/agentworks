@@ -173,17 +173,18 @@ provenance disclosure as the curated toolset.
   Evidence: `docs/specs/harness.md`.
   Commit: `docs(specs): add harness intent spec`
 
-### TODO
-
 - **1.3 Write 3 pilot golden tasks by hand.** Owner: W.
   Three tasks written to the format from 1.1, drawn from the Phase 1
   candidates in `handbuilt-vs-naive.md §8`: one that exercises the
   type-vs-name trap; one write-chore that pins timezone in phrasing
   (deadline test from §5b); one that probes information loss vs
   coordination cost. Each with its deterministic grader block.
-  Evidence: `tasks/pilot-*.yaml` — three files, zod-validated against
-  the format spec.
+  Evidence: `tasks/pilot-state-trap.yaml`,
+  `tasks/pilot-deadline-write.yaml`, `tasks/pilot-info-vs-cost.yaml` —
+  three files, zod-validated against the format spec.
   Commit: `feat(tasks): add three pilot golden tasks`
+
+### TODO
 
 - **1.4 Build the golden-task loader with zod validation.** Owner: AI.
   Minimal package `packages/harness` that reads the pilot YAMLs from

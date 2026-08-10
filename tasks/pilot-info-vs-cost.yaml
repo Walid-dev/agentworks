@@ -1,0 +1,24 @@
+id: triage-highest-priority
+class: info-vs-cost
+prompt: >
+  One story on the team's board is marked Highest priority. Reply with
+  just its story id.
+expected_tools: {}
+grade:
+  - answer_ids: { equals_fixture: "priority-story" }
+  - workspace_unchanged: true
+setup:
+  - ref: priority-story
+    title: "Priority probe {{run}}"
+    state: "To Do"
+    story_type: chore
+    priority: "Highest"
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §5a. The curated toolset trims
+  priority away entirely; the naive pass-through surfaces it. This task
+  rewards information breadth and so is expected to favor the naive
+  lane — the ledger must have entries on both sides. expected_tools is
+  empty on purpose: there is no single right path, only a right answer.

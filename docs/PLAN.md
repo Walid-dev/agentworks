@@ -193,9 +193,20 @@ provenance disclosure as the curated toolset.
   (`packages/harness/src/tasks.ts` + `packages/harness/src/cli.ts`).
   Commit: `feat(harness): add golden-task loader with zod validation`
 
+- **1.5 Write the graders spec.** Owner: W.
+  Format matches 1.1 and 1.2. Defines the deterministic grader
+  contract for turning one finished attempt into pass/fail plus
+  measurements: per-check semantics (`story_exists`, `story_absent`,
+  `comment_on`, `answer_ids` with `equals_state`/`equals_fixture`,
+  `workspace_unchanged`), tolerance handling, measurement set,
+  boundaries (deterministic-only, no writes, receipts on every fetch,
+  ungraded vs failed distinction). No code.
+  Evidence: `docs/specs/graders.md`.
+  Commit: `docs(specs): add graders spec`
+
 ### TODO
 
-- **1.5 Build the runner against the bare loop.** Owner: AI.
+- **1.6 Build the runner against the bare loop.** Owner: AI.
   Extend `packages/harness` to run one golden task once against one
   MCP server, using the bare loop from `packages/agent` as the agent
   runtime. Per-attempt: log every tool call to JSONL under
@@ -211,17 +222,17 @@ provenance disclosure as the curated toolset.
   string.
   Commit: `feat(harness): add per-task runner with full call logging`
 
-- **1.6 Build the deterministic grader base.** Owner: AI.
-  Minimal grader that reads a JSONL transcript + a golden task's
-  grader block and returns pass/fail per task, plus derived
-  measurements: task-success (verified against Shortcut REST as
-  ground truth), tool-selection accuracy against expected tool names,
-  tool-calls-per-task, tokens in/out, wall-clock latency (within same
-  transport), invalid tool calls (nonexistent name or arg-schema
-  breakage). Casing and date-window tolerances honored per task
-  declaration. **Isolation inside the harness (course-reset applied
-  per attempt): each repetition uses unique story identifiers and
-  tears down its own created artifacts between attempts; the
+- **1.7 Build the deterministic grader base.** Owner: AI.
+  Implement the grader contract from 1.5. Reads a JSONL transcript +
+  a golden task's grader block and returns pass/fail per task, plus
+  derived measurements: task-success (verified against Shortcut REST
+  as ground truth), tool-selection accuracy against expected tool
+  names, tool-calls-per-task, tokens in/out, wall-clock latency
+  (within same transport), invalid tool calls (nonexistent name or
+  arg-schema breakage). Casing and date-window tolerances honored per
+  task declaration. **Isolation inside the harness (course-reset
+  applied per attempt): each repetition uses unique story identifiers
+  and tears down its own created artifacts between attempts; the
   workspace must match the documented baseline before the next
   attempt begins. Teardown verification is required evidence, not
   assumed.**
@@ -233,19 +244,19 @@ provenance disclosure as the curated toolset.
   raw JSONL + a small SQLite file under `runs/`.
   Commit: `feat(harness): add deterministic graders with course-reset isolation`
 
-- **1.7 Pilot review and format lock.** Owner: W.
+- **1.8 Pilot review and format lock.** Owner: W.
   Read the three pilot runs' outputs. Confirm the golden-task format
   and the harness produce the intended discrimination: chores in the
   §8 categories separate curated from naive on at least one measured
   axis. If they do not, revise the format spec (1.1) or the graders
-  (1.6) before mass authoring. This is the gate before scaling from 3
+  (1.7) before mass authoring. This is the gate before scaling from 3
   to ~20 tasks.
   Evidence: `docs/reports/phase1-pilot-review.md`, ending with an
   explicit "format locked" line or a list of revisions and the follow-up
   commits landing them.
   Commit: `docs(reports): lock phase 1 golden-task and harness format`
 
-- **1.8 Author the full golden-task set (20 to 25 tasks).** Owner: AI.
+- **1.9 Author the full golden-task set (20 to 25 tasks).** Owner: AI.
   Author the remaining golden tasks per the locked format, covering
   every §8 candidate class. Each task's grader block deterministic
   against Shortcut ground truth; tolerances declared explicitly.
@@ -255,11 +266,11 @@ provenance disclosure as the curated toolset.
   all zod-validating.
   Commit: `feat(tasks): add remaining phase 1 golden tasks`
 
-- **1.9 Run the two-lane sweep and produce Benchmark Report #1
+- **1.10 Run the two-lane sweep and produce Benchmark Report #1
   (curated vs naive).** Owner: AI.
   Full sweep on the two local stdio lanes only: every golden task ×
   two lanes (curated, naive) × N repetitions × two driver tiers
-  (`official` from step 1.5 for the numbers in the report; `smoke`
+  (`official` from step 1.6 for the numbers in the report; `smoke`
   for the sanity sweep and the cheap-tier axis). **Pin the `smoke`
   driver id here as its first actual use, per STACK.md's
   pin-at-first-use rule; recorded in `docs/decisions.md`.** Compare
@@ -269,28 +280,28 @@ provenance disclosure as the curated toolset.
   one new decisions.md line pinning the `smoke` driver id.
   Commit: `docs(reports): benchmark report 1`
 
-- **1.10 Add the official Shortcut MCP as a third lane and reissue.**
+- **1.11 Add the official Shortcut MCP as a third lane and reissue.**
   Owner: AI.
   The official Shortcut MCP is an **external boundary** — a remote
   server we do not control — so it gets its own step. A connection
-  failure cannot block the headline report from 1.9. Wire the remote
-  server over the streamable-HTTP transport in
+  failure cannot block the headline report from 1.10. Wire the
+  remote server over the streamable-HTTP transport in
   `@modelcontextprotocol/sdk`; no editing on the official side.
   **Connectivity/auth verify gate: the harness must successfully
   connect, list tools, and complete one read call against the
   official server before any sweep runs.** Then re-run the full
   sweep across all three lanes (curated, naive, official) at the
-  same tier settings as 1.9, and produce a reissued report.
+  same tier settings as 1.10, and produce a reissued report.
   Evidence: `docs/reports/benchmark-1-with-official.md` plus the
   reissued `runs/bench.sqlite`; server identity and version (as
   surfaced by the remote) recorded in `docs/decisions.md`.
   Commit: `docs(reports): benchmark report 1 with official lane`
 
-- **1.11 Close Phase 1.** Owner: W.
+- **1.12 Close Phase 1.** Owner: W.
   Confirm the exit criterion is met: Benchmark Report #1 (the
-  two-lane report from 1.9) exists, with real numbers, and the
+  two-lane report from 1.10) exists, with real numbers, and the
   format is stable enough to run again on the monthly upgrade day.
-  The official-lane reissue from 1.10 is a **bonus, not a gate** —
+  The official-lane reissue from 1.11 is a **bonus, not a gate** —
   its presence or absence does not affect phase closure. Tag
   `phase-1`. Draft the Phase 2 step list into this file, informed by
   what Report #1 revealed and the pending refiner-aggressiveness

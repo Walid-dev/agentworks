@@ -184,15 +184,16 @@ provenance disclosure as the curated toolset.
   three files, zod-validated against the format spec.
   Commit: `feat(tasks): add three pilot golden tasks`
 
-### TODO
-
 - **1.4 Build the golden-task loader with zod validation.** Owner: AI.
   Minimal package `packages/harness` that reads the pilot YAMLs from
   1.3 and validates them against a zod schema derived from the 1.1
   spec. Loader only; no runner yet.
-  Evidence: `pnpm --filter @agentworks/harness dev tasks/pilot-*.yaml`
-  loads and prints all three; invalid YAML fails loudly.
+  Evidence: `packages/harness` with `tasks validate` command passing
+  on the three pilots
+  (`packages/harness/src/tasks.ts` + `packages/harness/src/cli.ts`).
   Commit: `feat(harness): add golden-task loader with zod validation`
+
+### TODO
 
 - **1.5 Build the runner against the bare loop.** Owner: AI.
   Extend `packages/harness` to run one golden task once against one

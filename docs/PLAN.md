@@ -153,10 +153,6 @@ provenance disclosure as the curated toolset.
 
 ### DONE
 
-*(none yet — populated as each step lands)*
-
-### TODO
-
 - **1.1 Write the golden-task format spec.** Owner: W.
   Format follows `docs/specs/agent-loop.md`: Intent, What it does,
   Boundaries, Done when. Defines the YAML shape for a golden task:
@@ -166,6 +162,8 @@ provenance disclosure as the curated toolset.
   the disclosure that tasks are AI-authored under human review. No code.
   Evidence: `docs/specs/golden-task-format.md`.
   Commit: `docs(specs): add golden-task format spec`
+
+### TODO
 
 - **1.2 Write the harness spec.** Owner: W.
   Format matches 1.1. Defines the harness runtime: per-chore

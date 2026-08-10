@@ -4,6 +4,13 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-10 — Second sweep tier pinned: claude-opus-4-7 (not a cheap
+  tier) — operationalizes the registered dual prediction (does a
+  stronger driver erase toolset gaps?) and reconnects with the Phase 0
+  hand-exam driver for continuity. Headline remains claude-sonnet-4-6:
+  benchmarks should headline the driver real agent workloads run. A
+  cheap tier (haiku-class) may be added later as a third lane if budget
+  allows; it is not required for Report #1.
 - 2026-08-10 — Headline driver id pinned at 1.6 first use:
   `claude-sonnet-4-6`. Same string as the dev tier pinned on 2026-08-03,
   so Phase 1 dev iteration and Report #1 numbers land under one model

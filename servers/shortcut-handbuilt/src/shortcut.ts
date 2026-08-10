@@ -74,11 +74,15 @@ export const GroupSchema = z.object({
 	mention_name: z.string(),
 });
 
+// Soft-deleted comments stay in the story's comments array with
+// text: null and deleted: true. Verified live against sc-17 which
+// carries tombstones from the 2026-08-08 course reset.
 export const StoryCommentSchema = z.object({
 	id: z.number(),
-	text: z.string(),
+	text: z.string().nullable(),
 	author_id: z.string(),
 	created_at: z.string(),
+	deleted: z.boolean().optional(),
 });
 
 export const StorySchema = z.object({

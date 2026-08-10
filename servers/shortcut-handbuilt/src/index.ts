@@ -151,11 +151,13 @@ function fullStory(s: Story) {
 			description: t.description,
 			complete: t.complete,
 		})),
-		comments: s.comments.map((c) => ({
-			author: memberName(c.author_id),
-			text: c.text,
-			created_at: c.created_at,
-		})),
+		comments: s.comments
+			.filter((c) => c.deleted !== true)
+			.map((c) => ({
+				author: memberName(c.author_id),
+				text: c.text,
+				created_at: c.created_at,
+			})),
 		story_links: s.story_links.map((l) => ({
 			verb: l.type === "subject" ? l.verb : invertVerb(l.verb),
 			other_story_id: l.type === "subject" ? l.object_id : l.subject_id,

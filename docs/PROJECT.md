@@ -135,6 +135,29 @@ matching it is the stretch goal. Official toolsets carry years of product
 knowledge, some never written down, so approaching them on public
 information alone is already the result that matters.
 
+## How this differs from existing agent benchmarks
+
+Public benchmarks such as MCP-Bench, MCP-RADAR, and MCPEval measure the
+model: given a fixed set of tools, how well does each LLM plan, pick,
+and call them. The tools are held constant; the model is the variable.
+
+AgentWorks measures the opposite axis. The model is pinned; the toolset
+is the variable. Same tasks, same driver, different toolsets for the
+same software — naive conversion, hand-curated, official, generated —
+and the Examiner reports which toolset lets the same agent do the job
+better, cheaper, and more reliably.
+
+The two axes answer different questions. The model axis answers "which
+model should I use." The toolset axis answers "is my integration any
+good" — the question every team shipping tools for agents has, and the
+one existing leaderboards don't address.
+
+The engine underneath — real tasks, repeated attempts, recorded
+transcripts, deterministic grading against reality — is deliberately
+surface-agnostic: MCP toolsets first, other surfaces such as websites
+later. Keeping that breadth is a standing design constraint: we build
+for the axis, not for one target.
+
 ## Goals, in order
 
 1. **Learning.** Master modern AI engineering by building, not just reading: how agents work, how AI quality is measured, how tools and context are designed. Every phase pairs building with selected reading.

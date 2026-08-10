@@ -30,6 +30,7 @@ export type RuntimeResult = {
 
 export type RuntimeOpts = {
 	task: GoldenTask;
+	userPrompt: string;
 	mcp: Client;
 	driverId: string;
 	log: Logger;
@@ -80,11 +81,11 @@ export const bareLoopRuntime: AgentRuntime = {
 		});
 
 		const messages: MessageParam[] = [
-			{ role: "user", content: opts.task.prompt },
+			{ role: "user", content: opts.userPrompt },
 		];
 		opts.log({
 			type: "user",
-			content: opts.task.prompt,
+			content: opts.userPrompt,
 			at: new Date().toISOString(),
 		});
 

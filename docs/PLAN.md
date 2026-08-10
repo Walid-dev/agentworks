@@ -221,8 +221,6 @@ provenance disclosure as the curated toolset.
   the `2026-08-10` headline-driver line in `docs/decisions.md`
   pinning `claude-sonnet-4-6` (dev tier already pinned 2026-08-03).
 
-### TODO
-
 - **1.7 Build the deterministic grader base.** Owner: AI.
   Implement the grader contract from 1.5. Reads a JSONL transcript +
   a golden task's grader block and returns pass/fail per task, plus
@@ -237,13 +235,20 @@ provenance disclosure as the curated toolset.
   workspace must match the documented baseline before the next
   attempt begins. Teardown verification is required evidence, not
   assumed.**
-  Evidence: run all three pilot tasks × two lanes (curated, naive) ×
-  three repetitions per lane; grader produces per-attempt pass/fail
-  and per-task-per-lane aggregates; **plus a teardown-verification
-  log showing the workspace at the end of each attempt matches the
-  documented baseline before the next attempt starts.** Committed as
-  raw JSONL + a small SQLite file under `runs/`.
-  Commit: `feat(harness): add deterministic graders with course-reset isolation`
+  Evidence: `packages/harness/src/{graders,storage,vocabulary,setup}.ts`
+  plus the `sweep` and `sqlite rebuild` commands in `cli.ts`; partial
+  sweep at `runs/2026-08-10T21-55-15-539Z/` (15/18 attempts completed;
+  credit exhausted mid-rep-3) — grader-functionality evidence only,
+  not pilot results; clean pilot runs at 1.8. `bench.sqlite` is
+  derived and disposable (per docs/specs/harness.md), rebuildable from
+  the JSONL via `bench sqlite rebuild <sweep-dir>`; the JSONL is the
+  truth and is committed under `runs/`. Teardown-verification log at
+  `runs/2026-08-10T21-55-15-539Z/teardown-log.jsonl` with every
+  completed attempt's baseline re-verify; live workspace clean
+  (10 baseline stories) after the sweep; unit tests for the tolerance
+  edges (`packages/harness/src/graders.test.ts`).
+
+### TODO
 
 - **1.8 Pilot review and format lock.** Owner: W.
   Read the three pilot runs' outputs. Confirm the golden-task format

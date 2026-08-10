@@ -1,15 +1,15 @@
+import { createStory } from "./shortcut.js";
 import type { GoldenTask } from "./tasks.js";
+import {
+	loadVocabulary,
+	resolvePriorityValueId,
+	resolveStateId,
+} from "./vocabulary.js";
 
 // Setup runs before an attempt. It creates the task's fixture stories,
 // substituting {{run}} with the attempt's unique stamp so repetitions
-// never collide. The fixture map returned is used by graders
-// (equals_fixture) and by teardown.
-//
-// For the 1.6 scope, setup is stubbed — the pilot task used to verify
-// (state-name-vs-type) has no setup. Full setup support (state-name-
-// to-id lookup, story_type mapping, priority custom-field wiring)
-// lands with the grader work in 1.7 once tasks with setup fixtures
-// are exercised end to end.
+// never collide. The returned fixtures map is used by graders
+// (equals_fixture, comment_on) and by teardown.
 
 export type Fixture = {
 	ref?: string;
@@ -23,13 +23,26 @@ export function substituteRun(str: string, runStamp: string): string {
 
 export async function runSetup(
 	task: GoldenTask,
-	_runStamp: string,
-	_token: string,
+	runStamp: string,
+	token: string,
 ): Promise<Fixture[]> {
 	if (!task.setup || task.setup.length === 0) return [];
-	// Deliberate: any task with fixtures fails until 1.7 wires the
-	// state-name / story-type / priority mappings and the create call.
-	throw new Error(
-		`setup not yet implemented (task ${task.id} has ${task.setup.length} fixture(s)); wire in step 1.7 before running`,
-	);
+	const vocab = await loadVocabulary(token);
+	const fixtures: Fixture[] = [];
+	for (const spec of task.setup) {
+		const title = substituteRun(spec.title, runStamp);
+		const workflow_state_id = resolveStateId(vocab, spec.state);
+		const body: Parameters<typeof createStory>[1] = {
+			name: title,
+			story_type: spec.story_type,
+			workflow_state_id,
+		};
+		if (spec.priority) {
+			const cf = resolvePriorityValueId(vocab, spec.priority);
+			body.custom_fields = [cf];
+		}
+		const story = await createStory(token, body);
+		fixtures.push({ ref: spec.ref, title, live_id: story.id });
+	}
+	return fixtures;
 }

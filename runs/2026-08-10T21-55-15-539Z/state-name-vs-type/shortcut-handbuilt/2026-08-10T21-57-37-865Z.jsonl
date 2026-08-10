@@ -1,0 +1,5 @@
+{"type":"meta.start","task_id":"state-name-vs-type","lane_id":"shortcut-handbuilt","driver_id":"claude-sonnet-4-6","run_stamp":"2026-08-10T21-57-37-865Z","sweep_id":"2026-08-10T21-55-15-539Z","started_at":"2026-08-10T21:57:37.865Z"}
+{"type":"baseline.before","ok":true,"live_count":10,"issues":[]}
+{"type":"setup","fixtures":[],"at":"2026-08-10T21:57:38.051Z"}
+{"type":"tools_available","count":10,"names":["whoami","list_workspace_vocabulary","list_my_stories","list_team_stories","find_stories","get_story","create_story","move_story","comment_on_story","update_story"],"at":"2026-08-10T21:57:38.928Z"}
+{"type":"user","content":"Which stories are in the In Progress column right now? Reply with just the story ids, comma-separated.\n","at":"2026-08-10T21:57:38.928Z"}

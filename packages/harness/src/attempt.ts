@@ -2,10 +2,11 @@ import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { checkBaseline, snapshotIdSet } from "./baseline.js";
+import { type GradeRecord, grade } from "./graders.js";
 import type { Lane } from "./lanes.js";
 import { createLogger } from "./logger.js";
 import { bareLoopRuntime } from "./runtime.js";
-import { runSetup } from "./setup.js";
+import { runSetup, substituteRun } from "./setup.js";
 import type { GoldenTask } from "./tasks.js";
 import { runTeardown } from "./teardown.js";
 
@@ -20,8 +21,9 @@ export type AttemptOpts = {
 export type AttemptResult = {
 	transcriptPath: string;
 	runStamp: string;
-	status: "ungraded" | "refused";
+	status: "pass" | "fail" | "ungraded" | "refused";
 	reason?: string;
+	grade?: GradeRecord;
 };
 
 function makeRunStamp(): string {
@@ -44,7 +46,7 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 	if (!process.env.ANTHROPIC_API_KEY)
 		throw new Error("ANTHROPIC_API_KEY is not set");
 
-	const log = createLogger(transcriptPath, [token]);
+	const { log, events } = createLogger(transcriptPath, [token]);
 
 	log({
 		type: "meta.start",
@@ -106,6 +108,7 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 	try {
 		runtimeResult = await bareLoopRuntime.run({
 			task: opts.task,
+			userPrompt: substituteRun(opts.task.prompt, runStamp),
 			mcp,
 			driverId: opts.driverId,
 			log,
@@ -124,20 +127,36 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 		at: new Date().toISOString(),
 	});
 
+	// Grade BEFORE teardown so the workspace still holds whatever the
+	// agent did (per docs/specs/graders.md). Snapshot the post-attempt
+	// id set for workspace_unchanged.
+	const postIds = await snapshotIdSet(token);
+	const gradeRecord = await grade({
+		task: opts.task,
+		events: events as Array<Record<string, unknown> & { type: string }>,
+		fixtures,
+		preIds,
+		postIds,
+		runStamp,
+		laneId: opts.lane.id,
+		token,
+	});
+	log(gradeRecord);
+
 	// Teardown: capture-before-destroy, then baseline re-verify.
 	const teardown = await runTeardown(fixtures, preIds, token);
 	log({ type: "teardown", ...teardown, at: new Date().toISOString() });
 
 	log({
 		type: "meta.end",
-		status: "ungraded",
-		note: "grading lands in step 1.7",
+		status: gradeRecord.status,
 		ended_at: new Date().toISOString(),
 	});
 
 	return {
 		transcriptPath,
 		runStamp,
-		status: "ungraded",
+		status: gradeRecord.status,
+		grade: gradeRecord,
 	};
 }

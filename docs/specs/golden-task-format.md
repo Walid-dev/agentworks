@@ -27,9 +27,13 @@ A golden task is a YAML file under `tasks/` with these fields:
     ids, comma-separated"), because deterministic graders cannot judge
     free prose.
 - `setup` — optional list of fixture stories to create before each
-  attempt (title, state, type, and any fields the task needs). Titles
-  may contain `{{run}}`, a unique stamp the harness substitutes per
-  attempt so repetitions never collide — the course-reset rule as a
+  attempt. Each entry declares the story's `title`, `state`,
+  `story_type`, and any fields the task needs — including optional
+  `priority`. Each entry may declare an optional `ref`: a stable name
+  other parts of the task can point at (for example,
+  `answer_ids: { equals_fixture: <ref> }` in a grade check).
+  Titles may contain `{{run}}`, a unique stamp the harness substitutes
+  per attempt so repetitions never collide — the course-reset rule as a
   placeholder. Teardown is derived from setup plus anything the attempt
   created; tasks never hand-write teardown.
 - `expected_tools` — optional map from lane id to the tool names an
@@ -48,7 +52,13 @@ A golden task is a YAML file under `tasks/` with these fields:
   - `comment_on`: story ref, `text_contains`.
   - `answer_ids`: the final assistant message must contain exactly this
     set of story ids (set comparison on extracted numbers) — the
-    deterministic way to grade read tasks.
+    deterministic way to grade read tasks. Variants:
+    - `answer_ids: { equals_state: "<state name>" }` — the id set of
+      stories currently in that named workflow state, computed live
+      from Shortcut at grading time.
+    - `answer_ids: { equals_fixture: "<ref>" }` — passes when the id
+      set equals exactly the live id the named `setup` fixture
+      received at setup time.
   - `workspace_unchanged`: nothing beyond fixtures was created or
     modified — catches destructive wandering on read tasks.
 - `tolerances` — task-level defaults, overridable per check:

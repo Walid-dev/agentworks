@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+	checkAnswerIds,
 	checkStoryExists,
 	type GradeInputs,
 	harvestStoryIds,
@@ -52,8 +53,8 @@ function makeVocab(): Vocabulary {
 			mention_name: "walid",
 		},
 		customFields: [],
-		stateIdByName: new Map(),
-		stateNameById: new Map(),
+		stateIdByName: new Map([["in progress", 500000008]]),
+		stateNameById: new Map([[500000008, "In Progress"]]),
 	};
 }
 
@@ -337,5 +338,85 @@ describe("story_exists on a teamless story (naive-lane failure mode)", () => {
 		);
 		expect(result.ok).toBe(true);
 		expect(result.details.story_id).toBe(78);
+	});
+});
+
+describe("answer_ids equals_state (workspace-wide, teamless stories included)", () => {
+	it("expected set includes a teamless story in the target state", async () => {
+		const teamed: LiveStory = {
+			id: 17,
+			name: "Get Started with Shortcut",
+			workflow_state_id: 500000008,
+			epic_id: 16,
+			story_type: "feature",
+		};
+		const teamless: LiveStory = {
+			id: 999,
+			name: "loose story with no team",
+			workflow_state_id: 500000008,
+			epic_id: null,
+			story_type: "chore",
+		};
+		const finalEv: TranscriptEvent = {
+			type: "final_answer",
+			text: "17, 999",
+		};
+		const inputs: GradeInputs = {
+			task: { ...dummyTask, class: "state-trap" as const },
+			events: [finalEv],
+			fixtures: [],
+			preIds: new Set(),
+			postIds: new Set(),
+			runStamp: "STAMP",
+			laneId: "test-lane",
+			token: "unused",
+		};
+		const searchByState = vi.fn().mockResolvedValue([teamed, teamless]);
+		const ws: Workspace = {
+			searchByName: vi.fn(),
+			searchByState,
+			fetchStory: vi.fn(),
+		};
+		const result = await checkAnswerIds(
+			{ equals_state: "In Progress" },
+			inputs,
+			makeVocab(),
+			ws,
+		);
+		expect(result.ok).toBe(true);
+		expect(result.details.expected).toEqual([17, 999]);
+		expect(result.details.got).toEqual([17, 999]);
+		expect(searchByState).toHaveBeenCalledWith("In Progress");
+		// Not team-scoped — the receipt names the workspace-wide query.
+		const eps = result.receipts.map((r) => r.endpoint);
+		expect(eps.some((e) => e.includes("workspace-wide"))).toBe(true);
+		expect(eps.some((e) => e.includes("team:"))).toBe(false);
+	});
+
+	it("fails fast on unknown state name (typo protection)", async () => {
+		const ws: Workspace = {
+			searchByName: vi.fn(),
+			searchByState: vi.fn(),
+			fetchStory: vi.fn(),
+		};
+		const inputs: GradeInputs = {
+			task: { ...dummyTask, class: "state-trap" as const },
+			events: [{ type: "final_answer", text: "17" }],
+			fixtures: [],
+			preIds: new Set(),
+			postIds: new Set(),
+			runStamp: "STAMP",
+			laneId: "test-lane",
+			token: "unused",
+		};
+		const result = await checkAnswerIds(
+			{ equals_state: "Not A Real State" },
+			inputs,
+			makeVocab(),
+			ws,
+		);
+		expect(result.ok).toBe(false);
+		expect(String(result.details.reason)).toMatch(/unknown state/);
+		expect(ws.searchByState).not.toHaveBeenCalled();
 	});
 });

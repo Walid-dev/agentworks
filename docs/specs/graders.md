@@ -49,17 +49,20 @@ independently; the attempt passes only if every check passes.
   own starting snapshot: no stories created, deleted, or moved beyond
   the task's fixtures. Comments added by the attempt count as changes.
 
-**Story resolution** for `story_exists` and `story_absent` follows a
-fixed order: id-first from the transcript's `tool_result` bodies
-(server receipts, not agent prose), then a workspace-wide name search
-with bounded logged retries (four attempts spaced 0s / 2s / 4s / 8s to
-absorb Shortcut's eventually-consistent search index). The name search
-is never team-scoped; team membership — like every other story field —
-is an assertion applied to the matched story, never a filter on the
-match set. A story that carries the wrong team or no team must still
-resolve, so the grader can name the missing field as the failure. Each
-resolution attempt (id fetch, search page, sleep-and-retry) is recorded
-in the check's `receipts` per the receipts rule.
+**Resolution is workspace-wide for all checks.** No grader query is
+team-scoped. Team membership — like every other story field — is an
+assertion applied to matched stories, never a filter on the match
+set. A story that carries the wrong team or no team must still
+resolve, so the grader can name the missing field as the failure.
+Applied per check: `story_exists` and `story_absent` follow a fixed
+order — id-first from the transcript's `tool_result` bodies (server
+receipts, not agent prose), then a workspace-wide name search with
+bounded logged retries (four attempts spaced 0s / 2s / 4s / 8s to
+absorb Shortcut's eventually-consistent search index). `answer_ids
+equals_state` fetches the workspace-wide id set for the named state
+(query `state:"<name>"`), including teamless stories. Every fetch
+(id, name-search page, state-search, sleep-and-retry) lands in the
+check's `receipts` per the receipts rule.
 
 **Measurements, recorded regardless of pass/fail:** tool calls (count
 and full sequence from the transcript), invalid tool calls (nonexistent

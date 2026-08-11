@@ -96,6 +96,21 @@ export async function searchByName(
 	return data.data;
 }
 
+// Workspace-wide state search, no team filter — same reason as
+// searchByName. equals_state's expected set must include teamless
+// stories that happen to sit in the target state.
+export async function searchByState(
+	token: string,
+	stateName: string,
+): Promise<LiveStory[]> {
+	const q = encodeURIComponent(`state:"${stateName.replace(/"/g, '\\"')}"`);
+	const url = `${API}/search/stories?query=${q}&page_size=100`;
+	const res = await fetch(url, { headers: authHeaders(token) });
+	if (!res.ok) throw new Error(`Shortcut ${res.status}: ${await res.text()}`);
+	const data = (await res.json()) as { data: LiveStory[] };
+	return data.data;
+}
+
 export async function fetchStory(
 	token: string,
 	id: number,

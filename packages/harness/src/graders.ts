@@ -4,14 +4,9 @@
 // anywhere. Grading runs after the agent finishes and before teardown,
 // so the workspace still holds whatever the agent did.
 
-import { TEAM_MENTION_NAME } from "./baseline.js";
 import type { Fixture } from "./setup.js";
 import { substituteRun } from "./setup.js";
-import {
-	fetchStoryFull,
-	fetchTeamStories,
-	type LiveStoryFull,
-} from "./shortcut.js";
+import { fetchStoryFull, type LiveStoryFull } from "./shortcut.js";
 import type { GoldenTask } from "./tasks.js";
 import { loadVocabulary, type Vocabulary } from "./vocabulary.js";
 import { createLiveWorkspace, type Workspace } from "./workspace.js";
@@ -580,9 +575,11 @@ async function checkCommentOn(
 	};
 }
 
-async function checkAnswerIds(
+export async function checkAnswerIds(
 	inner: { equals_state?: string; equals_fixture?: string },
 	inputs: GradeInputs,
+	vocab: Vocabulary,
+	workspace: Workspace,
 ): Promise<CheckResult> {
 	const receipts: Receipt[] = [];
 	const answer = finalAnswer(inputs.events);
@@ -591,14 +588,9 @@ async function checkAnswerIds(
 	let source: string;
 	if (inner.equals_state !== undefined) {
 		const wanted = inner.equals_state;
-		const stories = await fetchTeamStories(inputs.token, TEAM_MENTION_NAME);
-		receipts.push({
-			endpoint: `GET /search/stories?query=team:${TEAM_MENTION_NAME}`,
-			at: new Date().toISOString(),
-		});
-		const vocab = await loadVocabulary(inputs.token);
-		const targetId = vocab.stateIdByName.get(wanted.toLowerCase());
-		if (targetId === undefined) {
+		// Sanity: fail fast on an unknown state name so a typo doesn't
+		// silently produce an empty expected set.
+		if (vocab.stateIdByName.get(wanted.toLowerCase()) === undefined) {
 			return {
 				kind: "answer_ids",
 				ok: false,
@@ -606,9 +598,14 @@ async function checkAnswerIds(
 				receipts,
 			};
 		}
-		expected = new Set(
-			stories.filter((s) => s.workflow_state_id === targetId).map((s) => s.id),
-		);
+		// Workspace-wide, not team-scoped: a teamless story in the target
+		// state must appear in the expected set. See docs/specs/graders.md.
+		const stories = await workspace.searchByState(wanted);
+		receipts.push({
+			endpoint: `GET /search/stories?query=state:"${wanted}" (workspace-wide)`,
+			at: new Date().toISOString(),
+		});
+		expected = new Set(stories.map((s) => s.id));
 		source = `equals_state:${wanted}`;
 	} else if (inner.equals_fixture !== undefined) {
 		const fx = inputs.fixtures.find((f) => f.ref === inner.equals_fixture);
@@ -681,7 +678,9 @@ export async function grade(inputs: GradeInputs): Promise<GradeRecord> {
 			} else if (g.comment_on !== undefined) {
 				checks.push(await checkCommentOn(g.comment_on, inputs));
 			} else if (g.answer_ids !== undefined) {
-				checks.push(await checkAnswerIds(g.answer_ids, inputs));
+				checks.push(
+					await checkAnswerIds(g.answer_ids, inputs, vocab, workspace),
+				);
 			} else if (g.workspace_unchanged === true) {
 				checks.push(checkWorkspaceUnchanged(inputs));
 			}

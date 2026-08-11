@@ -4,6 +4,7 @@
 	"version": "0.0.0",
 	"type": "module",
 	"description": "Compiles APIs into agent-worthy MCP toolsets, and proves it with benchmarks.",
+	"packageManager": "pnpm@11.20.0",
 	"scripts": {
 		"typecheck": "tsc -b",
 		"lint": "biome check .",

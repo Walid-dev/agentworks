@@ -38,6 +38,9 @@ Full context load on demand: /agentworks
   STACK.md, working rules -> CONVENTIONS.md, choices -> decisions.md,
   steps and progress -> PLAN.md. Stable rules may be restated for
   convenience; anything that changes must be linked, never copied.
+- CI runs lint, typecheck, and tests on every push. A red main is the
+  next thing fixed before any new work. CI never holds secrets and
+  never makes paid or live-workspace calls.
 - Provider-specific code (SDKs, env names, response shapes) lives only
   inside runtime implementations behind the AgentRuntime interface.
   Task files, graders, storage, isolation, and the transcript's

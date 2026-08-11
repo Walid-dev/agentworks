@@ -21,6 +21,20 @@ export function substituteRun(str: string, runStamp: string): string {
 	return str.replace(/\{\{run\}\}/g, runStamp);
 }
 
+// Seam invariant: nothing that has been through substitution should still
+// carry a `{{name}}` placeholder. Called on every outbound API payload and
+// workspace write; also called in dry-run. Same pattern as the logger's
+// token-leak refusal — loud is safer than silent.
+const PLACEHOLDER_RE = /\{\{[^}]*\}\}/;
+export function assertNoPlaceholder(s: string, context: string): void {
+	const m = s.match(PLACEHOLDER_RE);
+	if (m) {
+		throw new Error(
+			`unsubstituted placeholder "${m[0]}" in ${context}; refusing to proceed`,
+		);
+	}
+}
+
 export async function runSetup(
 	task: GoldenTask,
 	runStamp: string,
@@ -31,6 +45,7 @@ export async function runSetup(
 	const fixtures: Fixture[] = [];
 	for (const spec of task.setup) {
 		const title = substituteRun(spec.title, runStamp);
+		assertNoPlaceholder(title, `fixture title for task ${task.id}`);
 		const workflow_state_id = resolveStateId(vocab, spec.state);
 		const body: Parameters<typeof createStory>[1] = {
 			name: title,

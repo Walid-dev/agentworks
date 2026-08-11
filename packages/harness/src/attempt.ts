@@ -6,7 +6,7 @@ import { type GradeRecord, grade } from "./graders.js";
 import type { Lane } from "./lanes.js";
 import { createLogger } from "./logger.js";
 import { bareLoopRuntime } from "./runtime.js";
-import { runSetup, substituteRun } from "./setup.js";
+import { assertNoPlaceholder, runSetup, substituteRun } from "./setup.js";
 import type { GoldenTask } from "./tasks.js";
 import { runTeardown } from "./teardown.js";
 
@@ -16,12 +16,21 @@ export type AttemptOpts = {
 	driverId: string;
 	runsBaseDir: string;
 	sweepId?: string;
+	dryRun?: boolean;
 };
+
+export type AttemptStatus =
+	| "pass"
+	| "fail"
+	| "ungraded"
+	| "refused"
+	| "dry-run-ok"
+	| "dry-run-fail";
 
 export type AttemptResult = {
 	transcriptPath: string;
 	runStamp: string;
-	status: "pass" | "fail" | "ungraded" | "refused";
+	status: AttemptStatus;
 	reason?: string;
 	grade?: GradeRecord;
 };
@@ -43,7 +52,9 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 
 	const token = process.env.SHORTCUT_API_TOKEN;
 	if (!token) throw new Error("SHORTCUT_API_TOKEN is not set");
-	if (!process.env.ANTHROPIC_API_KEY)
+	// Dry-run makes zero model calls; ANTHROPIC_API_KEY is only required
+	// when the runtime will actually be invoked.
+	if (!opts.dryRun && !process.env.ANTHROPIC_API_KEY)
 		throw new Error("ANTHROPIC_API_KEY is not set");
 
 	const { log, events } = createLogger(transcriptPath, [token]);
@@ -55,6 +66,7 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 		driver_id: opts.driverId,
 		run_stamp: runStamp,
 		sweep_id: sweep,
+		dry_run: opts.dryRun === true,
 		started_at: new Date().toISOString(),
 	});
 
@@ -86,7 +98,8 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 	// during the attempt (not just setup fixtures).
 	const preIds = await snapshotIdSet(token);
 
-	// Setup (creates fixtures if the task has any).
+	// Setup (creates fixtures if the task has any). setup.ts asserts
+	// no placeholder remains in each fixture title.
 	const fixtures = await runSetup(opts.task, runStamp, token);
 	log({ type: "setup", fixtures, at: new Date().toISOString() });
 
@@ -103,6 +116,68 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 		version: "0.0.0",
 	});
 	await mcp.connect(transport);
+
+	if (opts.dryRun) {
+		// Full attempt lifecycle without any model call. Exercise every
+		// seam that a paid attempt would exercise except messages.create.
+		const dryFindings: string[] = [];
+		try {
+			const substitutedPrompt = substituteRun(opts.task.prompt, runStamp);
+			try {
+				assertNoPlaceholder(substitutedPrompt, "task prompt");
+			} catch (e) {
+				dryFindings.push((e as Error).message);
+			}
+			for (const fx of fixtures) {
+				try {
+					assertNoPlaceholder(fx.title, `fixture "${fx.ref ?? "?"}"`);
+				} catch (e) {
+					dryFindings.push((e as Error).message);
+				}
+			}
+			const listed = await mcp.listTools();
+			log({
+				type: "tools_available",
+				count: listed.tools.length,
+				names: listed.tools.map((t) => t.name),
+				at: new Date().toISOString(),
+			});
+			if (listed.tools.length === 0) {
+				dryFindings.push(
+					`lane ${opts.lane.id} exposed zero tools via tools/list`,
+				);
+			}
+		} finally {
+			await mcp.close();
+		}
+
+		const teardown = await runTeardown(fixtures, preIds, token);
+		log({ type: "teardown", ...teardown, at: new Date().toISOString() });
+		if (!teardown.baseline_reverify.ok) {
+			dryFindings.push(
+				`teardown left residue: ${teardown.baseline_reverify.issues.join("; ")}`,
+			);
+		}
+
+		const ok = dryFindings.length === 0;
+		log({
+			type: "dry_run.summary",
+			ok,
+			findings: dryFindings,
+			at: new Date().toISOString(),
+		});
+		log({
+			type: "meta.end",
+			status: ok ? "dry-run-ok" : "dry-run-fail",
+			ended_at: new Date().toISOString(),
+		});
+		return {
+			transcriptPath,
+			runStamp,
+			status: ok ? "dry-run-ok" : "dry-run-fail",
+			reason: ok ? undefined : dryFindings.join("; "),
+		};
+	}
 
 	let runtimeResult: Awaited<ReturnType<typeof bareLoopRuntime.run>>;
 	try {

@@ -61,6 +61,11 @@ program
 		"packages/harness/lanes.json",
 	)
 	.option("--runs-dir <path>", "runs base directory", "runs")
+	.option(
+		"--dry-run",
+		"run the full lifecycle with zero model calls (preflight)",
+		false,
+	)
 	.action(
 		async (opts: {
 			task: string;
@@ -69,6 +74,7 @@ program
 			tasksDir: string;
 			lanesFile: string;
 			runsDir: string;
+			dryRun: boolean;
 		}) => {
 			const loaded = loadTasksDir(opts.tasksDir);
 			const found = loaded.find((r) => r.ok && r.task.id === opts.task);
@@ -89,9 +95,15 @@ program
 				lane,
 				driverId: opts.driver,
 				runsBaseDir: opts.runsDir,
+				dryRun: opts.dryRun,
 			});
 			if (result.status === "refused") {
 				console.error(`\nREFUSED\n${result.reason}`);
+				console.error(`\ntranscript: ${result.transcriptPath}`);
+				process.exit(1);
+			}
+			if (result.status === "dry-run-fail") {
+				console.error(`\nDRY-RUN FAIL\n${result.reason}`);
 				console.error(`\ntranscript: ${result.transcriptPath}`);
 				process.exit(1);
 			}
@@ -121,6 +133,11 @@ program
 		"packages/harness/lanes.json",
 	)
 	.option("--runs-dir <path>", "runs base directory", "runs")
+	.option(
+		"--dry-run",
+		"run every attempt as a preflight (no model calls)",
+		false,
+	)
 	.action(
 		async (opts: {
 			tasks: string;
@@ -130,6 +147,7 @@ program
 			tasksDir: string;
 			lanesFile: string;
 			runsDir: string;
+			dryRun: boolean;
 		}) => {
 			const allTasks = loadTasksDir(opts.tasksDir);
 			for (const r of allTasks) {
@@ -176,6 +194,8 @@ program
 			let failed = 0;
 			let ungraded = 0;
 			let refused = 0;
+			let dryOk = 0;
+			let dryFail = 0;
 			const total = tasks.length * lanes.length * opts.reps;
 			let idx = 0;
 
@@ -202,6 +222,7 @@ program
 								driverId: opts.driver,
 								runsBaseDir: opts.runsDir,
 								sweepId,
+								dryRun: opts.dryRun,
 							});
 							console.log(result.status);
 							insertAttempt(
@@ -232,6 +253,8 @@ program
 							else if (result.status === "fail") failed++;
 							else if (result.status === "ungraded") ungraded++;
 							else if (result.status === "refused") refused++;
+							else if (result.status === "dry-run-ok") dryOk++;
+							else if (result.status === "dry-run-fail") dryFail++;
 						} catch (e) {
 							const msg = (e as Error).message;
 							console.log(`error: ${msg}`);
@@ -268,22 +291,35 @@ program
 			teardownLog({
 				type: "sweep.end",
 				sweep_id: sweepId,
+				dry_run: opts.dryRun,
 				passed,
 				failed,
 				ungraded,
 				refused,
+				dry_ok: dryOk,
+				dry_fail: dryFail,
 				at: new Date().toISOString(),
 			});
 
 			db.close();
 
-			console.log(
-				`\nsweep ${sweepId}: passed=${passed} failed=${failed} ungraded=${ungraded} refused=${refused}`,
-			);
+			if (opts.dryRun) {
+				console.log(
+					`\ndry-run sweep ${sweepId}: dry-ok=${dryOk} dry-fail=${dryFail} refused=${refused}`,
+				);
+			} else {
+				console.log(
+					`\nsweep ${sweepId}: passed=${passed} failed=${failed} ungraded=${ungraded} refused=${refused}`,
+				);
+			}
 			console.log(`bench.sqlite: ${dbPath}`);
 			console.log(`teardown log: ${teardownLogPath}`);
 
-			if (passed + failed + ungraded + refused === 0) process.exit(1);
+			if (passed + failed + ungraded + refused + dryOk + dryFail === 0)
+				process.exit(1);
+			// Sweep dry-run exits nonzero if any attempt failed preflight —
+			// makes CI-style gates trivial.
+			if (opts.dryRun && dryFail > 0) process.exit(1);
 		},
 	);
 

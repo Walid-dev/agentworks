@@ -45,7 +45,10 @@ Full context load on demand: /agentworks
   is exactly what the instruction names: three attempts means three;
   a sweep is never run unless the instruction says sweep. Debugging
   never re-runs paid attempts in a loop — fix against recorded
-  transcripts (replays are free) and re-run once to confirm.
+  transcripts (replays are free) and re-run once to confirm. Every
+  paid sweep is preceded by a dry-run of the identical configuration,
+  same tasks, same lanes; the sweep does not start until the dry-run
+  is green.
 
 ## Proposing work
 Before proposing any action, state which document authorizes it (file and

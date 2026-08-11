@@ -8,6 +8,7 @@ import type {
 } from "@anthropic-ai/sdk/resources/messages";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Logger } from "./logger.js";
+import { assertNoPlaceholder } from "./setup.js";
 import type { GoldenTask } from "./tasks.js";
 
 // AgentRuntime interface — one seat that plays a golden task against
@@ -80,6 +81,10 @@ export const bareLoopRuntime: AgentRuntime = {
 			at: new Date().toISOString(),
 		});
 
+		// Seam invariant: no outbound prompt should still carry a
+		// `{{...}}` placeholder. Guards paid attempts against the
+		// class of bug that made the first 1.7 sweep worthless.
+		assertNoPlaceholder(opts.userPrompt, "runtime userPrompt");
 		const messages: MessageParam[] = [
 			{ role: "user", content: opts.userPrompt },
 		];

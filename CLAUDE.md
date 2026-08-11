@@ -38,6 +38,11 @@ Full context load on demand: /agentworks
   STACK.md, working rules -> CONVENTIONS.md, choices -> decisions.md,
   steps and progress -> PLAN.md. Stable rules may be restated for
   convenience; anything that changes must be linked, never copied.
+- Provider-specific code (SDKs, env names, response shapes) lives only
+  inside runtime implementations behind the AgentRuntime interface.
+  Task files, graders, storage, isolation, and the transcript's
+  canonical fields stay provider-neutral. Anything Anthropic-shaped
+  above the runtime boundary is a review-blocking defect.
 - API spend is budgeted per step. Before any step that makes model
   calls, state the expected cost from measured per-attempt numbers
   (input+output tokens × current pinned driver price); if actual

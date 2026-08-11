@@ -4,6 +4,14 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-11 — Naive-lane finding: generated validation silently
+  collapses to passthrough (eval SyntaxError swallowed); tools work
+  only where the API tolerates unvalidated payloads. Generator output
+  as shipped; receipts in the 1.8 diagnosis. Corrected framing: the
+  earlier "createStory crashes" summary overstated it — creates
+  succeed unvalidated. The real 1.7-sweep failure on the naive lane's
+  create-with-pinned-deadline was ours (grader's team-scoped search
+  excluded teamless stories); fixed in the 1.8 grader refactor.
 - 2026-08-10 — Second sweep tier pinned: claude-opus-4-7 (not a cheap
   tier) — operationalizes the registered dual prediction (does a
   stronger driver erase toolset gaps?) and reconnects with the Phase 0

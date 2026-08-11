@@ -10,10 +10,11 @@ import { substituteRun } from "./setup.js";
 import {
 	fetchStoryFull,
 	fetchTeamStories,
-	type LiveStory,
+	type LiveStoryFull,
 } from "./shortcut.js";
 import type { GoldenTask } from "./tasks.js";
 import { loadVocabulary, type Vocabulary } from "./vocabulary.js";
+import { createLiveWorkspace, type Workspace } from "./workspace.js";
 
 export type TranscriptEvent = Record<string, unknown> & { type: string };
 
@@ -193,21 +194,122 @@ function computeMeasurements(
 	};
 }
 
-async function findByTitle(
-	token: string,
+// Harvest candidate story ids from tool_result events. Server receipts,
+// not agent prose: only top-level numeric ids in the tool's own JSON
+// response count. Extra ids (from reads, not just creates) are safe —
+// downstream name-matching filters non-target stories out.
+export function harvestStoryIds(events: TranscriptEvent[]): Set<number> {
+	const ids = new Set<number>();
+	for (const ev of events) {
+		if (ev.type !== "tool_result") continue;
+		if ((ev as { is_error?: boolean }).is_error === true) continue;
+		const output = (ev as { output?: unknown }).output;
+		if (
+			typeof output !== "object" ||
+			output === null ||
+			!("content" in output) ||
+			!Array.isArray((output as { content: unknown }).content)
+		)
+			continue;
+		const parts = (
+			output as { content: Array<{ type?: string; text?: string }> }
+		).content;
+		for (const p of parts) {
+			if (p.type !== "text" || typeof p.text !== "string") continue;
+			const stripped = p.text.replace(/^API Response \(Status: \d+\):\s*/, "");
+			let parsed: unknown;
+			try {
+				parsed = JSON.parse(stripped);
+			} catch {
+				continue;
+			}
+			if (
+				typeof parsed === "object" &&
+				parsed !== null &&
+				"id" in parsed &&
+				typeof (parsed as { id: unknown }).id === "number"
+			) {
+				ids.add((parsed as { id: number }).id);
+			}
+		}
+	}
+	return ids;
+}
+
+type ResolveOutcome =
+	| { kind: "hit"; story: LiveStoryFull }
+	| { kind: "ambiguous"; ids: number[] }
+	| { kind: "miss" };
+
+async function defaultSleep(ms: number): Promise<void> {
+	await new Promise((r) => setTimeout(r, ms));
+}
+
+// Retry policy: 4 total attempts spaced by 0s / 2s / 4s / 8s, per the
+// 1.8 diagnosis. Shortcut's search index is eventually consistent;
+// short reads immediately after a create sometimes miss. Every attempt
+// is logged as a receipt so a disputed grade can be re-litigated.
+const RETRY_DELAYS_MS = [0, 2000, 4000, 8000] as const;
+
+export async function resolveByNameWithRetry(
+	workspace: Workspace,
 	title: string,
 	casing: "insensitive" | "exact",
 	receipts: Receipt[],
-): Promise<LiveStory[]> {
-	const stories = await fetchTeamStories(token, TEAM_MENTION_NAME);
-	receipts.push({
-		endpoint: `GET /search/stories?query=team:${TEAM_MENTION_NAME}`,
-		at: new Date().toISOString(),
-	});
-	return stories.filter((s) => casingEqual(s.name, title, casing));
+	sleep: (ms: number) => Promise<void> = defaultSleep,
+): Promise<ResolveOutcome> {
+	for (let attempt = 0; attempt < RETRY_DELAYS_MS.length; attempt++) {
+		const delay = RETRY_DELAYS_MS[attempt] ?? 0;
+		if (delay > 0) await sleep(delay);
+		const results = await workspace.searchByName(title);
+		receipts.push({
+			endpoint: `GET /search/stories?query=name:"${title}" (attempt ${attempt + 1}, delay ${delay}ms)`,
+			at: new Date().toISOString(),
+		});
+		const matches = results.filter((s) => casingEqual(s.name, title, casing));
+		if (matches.length === 1) {
+			const first = matches[0];
+			if (!first) continue;
+			const full = await workspace.fetchStory(first.id);
+			receipts.push({
+				endpoint: `GET /stories/${first.id}`,
+				at: new Date().toISOString(),
+			});
+			if (full) return { kind: "hit", story: full };
+		} else if (matches.length > 1) {
+			return { kind: "ambiguous", ids: matches.map((m) => m.id) };
+		}
+	}
+	return { kind: "miss" };
 }
 
-async function checkStoryExists(
+// Id-first resolution: verify each harvested id against the workspace,
+// keep the ones whose name matches the target title with tolerance.
+async function resolveByHarvestedIds(
+	workspace: Workspace,
+	ids: Iterable<number>,
+	title: string,
+	casing: "insensitive" | "exact",
+	receipts: Receipt[],
+): Promise<ResolveOutcome> {
+	const hits: LiveStoryFull[] = [];
+	for (const id of ids) {
+		const full = await workspace.fetchStory(id);
+		receipts.push({
+			endpoint: `GET /stories/${id} (id-first)`,
+			at: new Date().toISOString(),
+		});
+		if (full && casingEqual(full.name, title, casing)) hits.push(full);
+	}
+	if (hits.length === 1) {
+		const first = hits[0];
+		if (first) return { kind: "hit", story: first };
+	}
+	if (hits.length > 1) return { kind: "ambiguous", ids: hits.map((s) => s.id) };
+	return { kind: "miss" };
+}
+
+export async function checkStoryExists(
 	inner: {
 		title: string;
 		state_name?: string;
@@ -220,52 +322,62 @@ async function checkStoryExists(
 	},
 	inputs: GradeInputs,
 	vocab: Vocabulary,
+	workspace: Workspace,
+	sleep: (ms: number) => Promise<void> = defaultSleep,
 ): Promise<CheckResult> {
 	const receipts: Receipt[] = [];
 	const casing = taskCasing(inputs.task);
 	const title = substituteRun(inner.title, inputs.runStamp);
-	const matches = await findByTitle(inputs.token, title, casing, receipts);
-	if (matches.length !== 1) {
+
+	// Story resolution: id-first from server receipts in the transcript,
+	// name-search fallback with bounded logged retries.
+	const harvested = harvestStoryIds(inputs.events);
+	let outcome: ResolveOutcome = await resolveByHarvestedIds(
+		workspace,
+		harvested,
+		title,
+		casing,
+		receipts,
+	);
+	if (outcome.kind === "miss") {
+		outcome = await resolveByNameWithRetry(
+			workspace,
+			title,
+			casing,
+			receipts,
+			sleep,
+		);
+	}
+
+	if (outcome.kind === "miss") {
 		return {
 			kind: "story_exists",
 			ok: false,
 			details: {
 				title,
-				match_count: matches.length,
-				match_ids: matches.map((m) => m.id),
+				match_count: 0,
 				reason:
-					matches.length === 0
-						? "no story with matching title"
-						: "ambiguous: multiple matches",
+					"no story with matching title (id-first + name-retry both missed)",
+				harvested_ids: [...harvested],
 			},
 			receipts,
 		};
 	}
-	const matched = matches[0];
-	if (!matched) {
+	if (outcome.kind === "ambiguous") {
 		return {
 			kind: "story_exists",
 			ok: false,
 			details: {
 				title,
-				reason: "index 0 missing despite length 1 (impossible)",
+				match_count: outcome.ids.length,
+				match_ids: outcome.ids,
+				reason: "ambiguous: multiple matches",
 			},
 			receipts,
 		};
 	}
-	const story = await fetchStoryFull(inputs.token, matched.id);
-	receipts.push({
-		endpoint: `GET /stories/${matched.id}`,
-		at: new Date().toISOString(),
-	});
-	if (!story) {
-		return {
-			kind: "story_exists",
-			ok: false,
-			details: { title, reason: "matched story disappeared before fetch" },
-			receipts,
-		};
-	}
+	const story = outcome.story;
+
 	const failures: string[] = [];
 	if (inner.state_name !== undefined) {
 		const actualStateName =
@@ -297,10 +409,13 @@ async function checkStoryExists(
 		);
 		if (!wantedTeam) {
 			failures.push(`team: unknown team "${inner.team}"`);
+		} else if (story.group_id === null) {
+			failures.push(`team: expected "${inner.team}", story has none`);
 		} else if (story.group_id !== wantedTeam.id) {
-			failures.push(
-				`team: expected group_id ${wantedTeam.id} (${inner.team}), got ${story.group_id}`,
-			);
+			const actualName =
+				vocab.groups.find((g) => g.id === story.group_id)?.name ??
+				story.group_id;
+			failures.push(`team: expected "${inner.team}", got "${actualName}"`);
 		}
 	}
 	if (inner.deadline_within !== undefined) {
@@ -344,7 +459,7 @@ async function checkStoryExists(
 		ok: failures.length === 0,
 		details: {
 			title,
-			story_id: matched.id,
+			story_id: story.id,
 			failures,
 		},
 		receipts,
@@ -354,18 +469,62 @@ async function checkStoryExists(
 async function checkStoryAbsent(
 	inner: { title: string },
 	inputs: GradeInputs,
+	workspace: Workspace,
+	sleep: (ms: number) => Promise<void> = defaultSleep,
 ): Promise<CheckResult> {
 	const receipts: Receipt[] = [];
 	const casing = taskCasing(inputs.task);
 	const title = substituteRun(inner.title, inputs.runStamp);
-	const matches = await findByTitle(inputs.token, title, casing, receipts);
+
+	// Id-first short-circuit: if any harvested id from the transcript
+	// resolves to a live story with this title, absence is refuted
+	// without needing the search index to be caught up.
+	const harvested = harvestStoryIds(inputs.events);
+	const idHit = await resolveByHarvestedIds(
+		workspace,
+		harvested,
+		title,
+		casing,
+		receipts,
+	);
+	if (idHit.kind === "hit" || idHit.kind === "ambiguous") {
+		const ids = idHit.kind === "hit" ? [idHit.story.id] : idHit.ids;
+		return {
+			kind: "story_absent",
+			ok: false,
+			details: {
+				title,
+				match_count: ids.length,
+				match_ids: ids,
+				reason: "story created during attempt (id-first)",
+			},
+			receipts,
+		};
+	}
+
+	// No id hit — fall back to name search with the same bounded retry
+	// as story_exists, but here a MISS means the check passes.
+	const outcome = await resolveByNameWithRetry(
+		workspace,
+		title,
+		casing,
+		receipts,
+		sleep,
+	);
+	const ok = outcome.kind === "miss";
+	const matchIds =
+		outcome.kind === "hit"
+			? [outcome.story.id]
+			: outcome.kind === "ambiguous"
+				? outcome.ids
+				: [];
 	return {
 		kind: "story_absent",
-		ok: matches.length === 0,
+		ok,
 		details: {
 			title,
-			match_count: matches.length,
-			match_ids: matches.map((m) => m.id),
+			match_count: matchIds.length,
+			match_ids: matchIds,
 		},
 		receipts,
 	};
@@ -509,13 +668,16 @@ export async function grade(inputs: GradeInputs): Promise<GradeRecord> {
 		inputs.laneId,
 	);
 	const checks: CheckResult[] = [];
+	const workspace = createLiveWorkspace(inputs.token);
 	try {
 		const vocab = await loadVocabulary(inputs.token);
 		for (const g of inputs.task.grade) {
 			if (g.story_exists !== undefined) {
-				checks.push(await checkStoryExists(g.story_exists, inputs, vocab));
+				checks.push(
+					await checkStoryExists(g.story_exists, inputs, vocab, workspace),
+				);
 			} else if (g.story_absent !== undefined) {
-				checks.push(await checkStoryAbsent(g.story_absent, inputs));
+				checks.push(await checkStoryAbsent(g.story_absent, inputs, workspace));
 			} else if (g.comment_on !== undefined) {
 				checks.push(await checkCommentOn(g.comment_on, inputs));
 			} else if (g.answer_ids !== undefined) {

@@ -81,6 +81,21 @@ export async function fetchTeamStories(
 	return data.data;
 }
 
+// Workspace-wide title search, no team filter. Team membership is a
+// grader assertion, not a search scope — teamless stories must remain
+// findable so the grader can name the missing team as a failure.
+export async function searchByName(
+	token: string,
+	title: string,
+): Promise<LiveStory[]> {
+	const q = encodeURIComponent(`name:"${title.replace(/"/g, '\\"')}"`);
+	const url = `${API}/search/stories?query=${q}&page_size=25`;
+	const res = await fetch(url, { headers: authHeaders(token) });
+	if (!res.ok) throw new Error(`Shortcut ${res.status}: ${await res.text()}`);
+	const data = (await res.json()) as { data: LiveStory[] };
+	return data.data;
+}
+
 export async function fetchStory(
 	token: string,
 	id: number,

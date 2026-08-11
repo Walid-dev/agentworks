@@ -38,6 +38,14 @@ Full context load on demand: /agentworks
   STACK.md, working rules -> CONVENTIONS.md, choices -> decisions.md,
   steps and progress -> PLAN.md. Stable rules may be restated for
   convenience; anything that changes must be linked, never copied.
+- API spend is budgeted per step. Before any step that makes model
+  calls, state the expected cost from measured per-attempt numbers
+  (input+output tokens × current pinned driver price); if actual
+  spend approaches 3x the estimate, STOP and ask. Model-call scope
+  is exactly what the instruction names: three attempts means three;
+  a sweep is never run unless the instruction says sweep. Debugging
+  never re-runs paid attempts in a loop — fix against recorded
+  transcripts (replays are free) and re-run once to confirm.
 
 ## Proposing work
 Before proposing any action, state which document authorizes it (file and

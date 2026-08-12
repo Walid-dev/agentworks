@@ -70,17 +70,6 @@ export type Member = {
 
 export type Group = { id: string; name: string; mention_name: string };
 
-export async function fetchTeamStories(
-	token: string,
-	teamMentionName: string,
-): Promise<LiveStory[]> {
-	const url = `${API}/search/stories?query=${encodeURIComponent(`team:${teamMentionName}`)}&page_size=100`;
-	const res = await fetch(url, { headers: authHeaders(token) });
-	if (!res.ok) throw new Error(`Shortcut ${res.status}: ${await res.text()}`);
-	const data = (await res.json()) as { data: LiveStory[] };
-	return data.data;
-}
-
 // Workspace-wide title search, no team filter. Team membership is a
 // grader assertion, not a search scope — teamless stories must remain
 // findable so the grader can name the missing team as a failure.
@@ -104,6 +93,19 @@ export async function searchByState(
 	stateName: string,
 ): Promise<LiveStory[]> {
 	const q = encodeURIComponent(`state:"${stateName.replace(/"/g, '\\"')}"`);
+	const url = `${API}/search/stories?query=${q}&page_size=100`;
+	const res = await fetch(url, { headers: authHeaders(token) });
+	if (!res.ok) throw new Error(`Shortcut ${res.status}: ${await res.text()}`);
+	const data = (await res.json()) as { data: LiveStory[] };
+	return data.data;
+}
+
+// Workspace-wide story list, no team filter. Used by baseline check
+// and snapshotIdSet so teamless artifacts are visible to the harness
+// (and can be caught, cleaned up, or refused). Baseline should be a
+// property of the whole workspace, not of one team.
+export async function fetchAllStories(token: string): Promise<LiveStory[]> {
+	const q = encodeURIComponent("is:story");
 	const url = `${API}/search/stories?query=${q}&page_size=100`;
 	const res = await fetch(url, { headers: authHeaders(token) });
 	if (!res.ok) throw new Error(`Shortcut ${res.status}: ${await res.text()}`);

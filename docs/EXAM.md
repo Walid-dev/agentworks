@@ -69,7 +69,9 @@ Notes become docs/reports/<target>-first-run.md.
   sessions ("recalled N memories"), note it: remembered context
   contaminates comparison between runs. The Phase 1 runtime must start
   amnesiac every attempt.
-- Every exam starts from the documented baseline state (see the latest
-  report's baseline list). Artifacts an exam creates are documented in
+- Every exam starts from the documented baseline state — currently
+  `docs/reports/baseline-2026-08-11.md`, which supersedes the baseline
+  sections in `naive-first-run.md` and `handbuilt-first-run.md`.
+  Artifacts an exam creates are documented in
   its report, then removed: the course resets between cars. The
   workspace is a lab bench; reports are the archive.

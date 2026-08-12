@@ -97,17 +97,23 @@ program
 				runsBaseDir: opts.runsDir,
 				dryRun: opts.dryRun,
 			});
-			if (result.status === "refused") {
+			if (result.grade_status === "refused") {
 				console.error(`\nREFUSED\n${result.reason}`);
 				console.error(`\ntranscript: ${result.transcriptPath}`);
 				process.exit(1);
 			}
-			if (result.status === "dry-run-fail") {
+			if (result.grade_status === "dry-run-fail") {
 				console.error(`\nDRY-RUN FAIL\n${result.reason}`);
 				console.error(`\ntranscript: ${result.transcriptPath}`);
 				process.exit(1);
 			}
-			console.log(`\nattempt ${result.status}: ${result.transcriptPath}`);
+			const suffix =
+				result.teardown_status === "error"
+					? ` (teardown_error: ${result.teardown_error ?? "?"})`
+					: "";
+			console.log(
+				`\nattempt ${result.grade_status}${suffix}: ${result.transcriptPath}`,
+			);
 		},
 	);
 
@@ -224,7 +230,11 @@ program
 								sweepId,
 								dryRun: opts.dryRun,
 							});
-							console.log(result.status);
+							const display =
+								result.teardown_status === "error"
+									? `${result.grade_status} (teardown_error)`
+									: result.grade_status;
+							console.log(display);
 							insertAttempt(
 								db,
 								rowFromGrade({
@@ -234,7 +244,9 @@ program
 									laneId: lane.id,
 									driverId: opts.driver,
 									transcriptPath: result.transcriptPath,
-									status: result.status,
+									grade_status: result.grade_status,
+									teardown_status: result.teardown_status,
+									teardown_error: result.teardown_error,
 									reason: result.reason ?? null,
 									grade: result.grade ?? null,
 								}),
@@ -244,17 +256,18 @@ program
 								run_stamp: result.runStamp,
 								task_id: task.id,
 								lane_id: lane.id,
-								status: result.status,
+								grade_status: result.grade_status,
+								teardown_status: result.teardown_status,
+								teardown_error: result.teardown_error ?? null,
 								transcript: result.transcriptPath,
-								teardown_reverify_ok: result.status === "refused" ? null : true,
 								at: new Date().toISOString(),
 							});
-							if (result.status === "pass") passed++;
-							else if (result.status === "fail") failed++;
-							else if (result.status === "ungraded") ungraded++;
-							else if (result.status === "refused") refused++;
-							else if (result.status === "dry-run-ok") dryOk++;
-							else if (result.status === "dry-run-fail") dryFail++;
+							if (result.grade_status === "pass") passed++;
+							else if (result.grade_status === "fail") failed++;
+							else if (result.grade_status === "ungraded") ungraded++;
+							else if (result.grade_status === "refused") refused++;
+							else if (result.grade_status === "dry-run-ok") dryOk++;
+							else if (result.grade_status === "dry-run-fail") dryFail++;
 						} catch (e) {
 							const msg = (e as Error).message;
 							console.log(`error: ${msg}`);
@@ -277,7 +290,8 @@ program
 									laneId: lane.id,
 									driverId: opts.driver,
 									transcriptPath: "",
-									status: "ungraded",
+									grade_status: "ungraded",
+									teardown_status: "skipped",
 									reason: msg,
 									grade: null,
 								}),
@@ -371,9 +385,47 @@ sqliteCmd
 						| GradeRecord
 						| undefined;
 					const metaEnd = events.find((e) => e.type === "meta.end") as
-						| { status?: string; reason?: string }
+						| {
+								status?: string;
+								grade_status?: string;
+								teardown_status?: string;
+								teardown_error?: string;
+								reason?: string;
+						  }
 						| undefined;
+					const teardownEv = events.find((e) => e.type === "teardown") as
+						| { baseline_reverify?: { ok?: boolean } }
+						| undefined;
+					const teardownError = events.find(
+						(e) => e.type === "teardown.error",
+					) as { error?: string } | undefined;
 					if (!meta?.run_stamp) continue;
+
+					// Bookkeeping split (1.8): grade_status and
+					// teardown_status are independent. Prefer the new
+					// meta.end fields; fall back to the old single `status`
+					// field for pre-1.8 transcripts (grade_status only) and
+					// infer teardown_status from the presence and shape of
+					// the teardown event.
+					const gradeStatus =
+						metaEnd?.grade_status ??
+						metaEnd?.status ??
+						gradeEv?.status ??
+						"ungraded";
+					const teardownStatus =
+						metaEnd?.teardown_status ??
+						(teardownError
+							? "error"
+							: teardownEv
+								? teardownEv.baseline_reverify?.ok === true
+									? "ok"
+									: "error"
+								: gradeStatus === "refused"
+									? "skipped"
+									: "error");
+					const teardownErrMsg =
+						metaEnd?.teardown_error ?? teardownError?.error ?? null;
+
 					insertAttempt(
 						db,
 						rowFromGrade({
@@ -383,9 +435,9 @@ sqliteCmd
 							laneId: meta.lane_id ?? laneId,
 							driverId: meta.driver_id ?? "unknown",
 							transcriptPath,
-							status: (metaEnd?.status ??
-								gradeEv?.status ??
-								"ungraded") as string,
+							grade_status: gradeStatus,
+							teardown_status: teardownStatus,
+							teardown_error: teardownErrMsg,
 							reason: metaEnd?.reason ?? null,
 							grade: gradeEv ?? null,
 						}),

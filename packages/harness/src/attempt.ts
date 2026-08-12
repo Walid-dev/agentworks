@@ -19,7 +19,10 @@ export type AttemptOpts = {
 	dryRun?: boolean;
 };
 
-export type AttemptStatus =
+// Honest bookkeeping (1.8 gate ruling): the grader and teardown record
+// independently. A teardown failure never overwrites a completed grade.
+// meta.end always names both, whether the run finished cleanly or not.
+export type GradeStatus =
 	| "pass"
 	| "fail"
 	| "ungraded"
@@ -27,10 +30,14 @@ export type AttemptStatus =
 	| "dry-run-ok"
 	| "dry-run-fail";
 
+export type TeardownStatus = "ok" | "error" | "skipped";
+
 export type AttemptResult = {
 	transcriptPath: string;
 	runStamp: string;
-	status: AttemptStatus;
+	grade_status: GradeStatus;
+	teardown_status: TeardownStatus;
+	teardown_error?: string;
 	reason?: string;
 	grade?: GradeRecord;
 };
@@ -81,7 +88,8 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 	if (!baselineBefore.ok) {
 		log({
 			type: "meta.end",
-			status: "refused",
+			grade_status: "refused",
+			teardown_status: "skipped",
 			reason: "dirty course",
 			ended_at: new Date().toISOString(),
 		});
@@ -89,7 +97,8 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 		return {
 			transcriptPath,
 			runStamp,
-			status: "refused",
+			grade_status: "refused",
+			teardown_status: "skipped",
 			reason,
 		};
 	}
@@ -151,11 +160,12 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 			await mcp.close();
 		}
 
-		const teardown = await runTeardown(fixtures, preIds, token);
-		log({ type: "teardown", ...teardown, at: new Date().toISOString() });
-		if (!teardown.baseline_reverify.ok) {
+		const dryTd = await runTeardownSafely(fixtures, preIds, token, log);
+		if (dryTd.status === "error") {
+			dryFindings.push(`teardown crashed: ${dryTd.error}`);
+		} else if (dryTd.record && !dryTd.record.baseline_reverify.ok) {
 			dryFindings.push(
-				`teardown left residue: ${teardown.baseline_reverify.issues.join("; ")}`,
+				`teardown left residue: ${dryTd.record.baseline_reverify.issues.join("; ")}`,
 			);
 		}
 
@@ -166,15 +176,19 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 			findings: dryFindings,
 			at: new Date().toISOString(),
 		});
+		const gradeStatus: GradeStatus = ok ? "dry-run-ok" : "dry-run-fail";
 		log({
 			type: "meta.end",
-			status: ok ? "dry-run-ok" : "dry-run-fail",
+			grade_status: gradeStatus,
+			teardown_status: dryTd.status,
 			ended_at: new Date().toISOString(),
 		});
 		return {
 			transcriptPath,
 			runStamp,
-			status: ok ? "dry-run-ok" : "dry-run-fail",
+			grade_status: gradeStatus,
+			teardown_status: dryTd.status,
+			teardown_error: dryTd.error,
 			reason: ok ? undefined : dryFindings.join("; "),
 		};
 	}
@@ -218,20 +232,53 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 	});
 	log(gradeRecord);
 
-	// Teardown: capture-before-destroy, then baseline re-verify.
-	const teardown = await runTeardown(fixtures, preIds, token);
-	log({ type: "teardown", ...teardown, at: new Date().toISOString() });
+	// Teardown: capture-before-destroy, then baseline re-verify. A
+	// crash here never overwrites the grade — the transcript records
+	// both statuses independently.
+	const td = await runTeardownSafely(fixtures, preIds, token, log);
 
 	log({
 		type: "meta.end",
-		status: gradeRecord.status,
+		grade_status: gradeRecord.status,
+		teardown_status: td.status,
+		teardown_error: td.error,
 		ended_at: new Date().toISOString(),
 	});
 
 	return {
 		transcriptPath,
 		runStamp,
-		status: gradeRecord.status,
+		grade_status: gradeRecord.status,
+		teardown_status: td.status,
+		teardown_error: td.error,
 		grade: gradeRecord,
 	};
+}
+
+// Wraps teardown in a try/catch so a Shortcut 5xx / network error at
+// this stage never eclipses the grade. If teardown throws before it
+// can write its own record, we synthesize a teardown.error event so
+// the transcript still tells the story.
+async function runTeardownSafely(
+	fixtures: Awaited<ReturnType<typeof runSetup>>,
+	preIds: Set<number>,
+	token: string,
+	log: (event: unknown) => void,
+): Promise<{
+	status: TeardownStatus;
+	error?: string;
+	record?: Awaited<ReturnType<typeof runTeardown>>;
+}> {
+	try {
+		const record = await runTeardown(fixtures, preIds, token);
+		log({ type: "teardown", ...record, at: new Date().toISOString() });
+		if (!record.baseline_reverify.ok) {
+			return { status: "error", record, error: "baseline re-verify failed" };
+		}
+		return { status: "ok", record };
+	} catch (e) {
+		const msg = (e as Error).message;
+		log({ type: "teardown.error", error: msg, at: new Date().toISOString() });
+		return { status: "error", error: msg };
+	}
 }

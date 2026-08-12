@@ -23,6 +23,7 @@ const SetupFixture = z
 		state: z.string(),
 		story_type: z.string(),
 		priority: z.string().optional(),
+		team: z.string().optional(),
 	})
 	.strict();
 

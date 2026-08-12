@@ -4,6 +4,32 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-11 — Pilot 1 findings (sweep 2026-08-11T21-17-39-312Z):
+  (a) triage-highest-priority's answer key was non-unique — sc-22 in
+  the baseline carried Priority=Highest alongside the fixture; agents
+  answering sc-22 were correct by the workspace, wrong by the grader;
+  students exonerated. Fixed by baseline amendment
+  (baseline-2026-08-11.md) removing the priority from sc-22 and by
+  fixture setup now sitting explicitly on the team;
+  (b) team-scope bug class instances 3 and 4 — snapshotIdSet and
+  checkBaseline were both team-scoped, leaving ten teamless artifacts
+  invisible to teardown and to baseline verification. Both now
+  workspace-wide (fetchAllStories);
+  (c) eclipsed-pass bookkeeping — sweep-level try/catch overwrote a
+  completed grade with "ungraded" when teardown crashed on a Shortcut
+  5xx. Split into grade_status and teardown_status; a teardown
+  failure never overwrites a completed grade; meta.end is always
+  written;
+  (d) softened trap confirmed at the query level — state-name-vs-type
+  didn't reproduce the hand-exam trigger because the prompt was
+  explicit; the companion task state-trap-implicit restores the
+  softened phrasing ("stories I'm currently working on") to catch
+  naive lanes that resolve it via state:started rather than the
+  literal In Progress state name;
+  (e) measured 141K-vs-9K per-attempt input-token gap (uncached)
+  between naive and curated lanes — the naive lane's ~90 tools
+  balloon the tool-definition payload per turn. Cost implication
+  registered for Report #1's budget.
 - 2026-08-11 — Naive-lane finding: generated validation silently
   collapses to passthrough (eval SyntaxError swallowed); tools work
   only where the API tolerates unvalidated payloads. Generator output

@@ -13,6 +13,7 @@ setup:
     state: "To Do"
     story_type: chore
     priority: "Highest"
+    team: "Walid Hl's Team"
 tolerances:
   casing: insensitive
 provenance: ai-drafted, human-reviewed
@@ -22,3 +23,11 @@ notes: >
   rewards information breadth and so is expected to favor the naive
   lane — the ledger must have entries on both sides. expected_tools is
   empty on purpose: there is no single right path, only a right answer.
+
+  Pilot 1 (2026-08-11) incident: sc-22 in the baseline carried a
+  competing Priority=Highest value, so the answer key was
+  non-unique — agents that returned sc-22 were right by the workspace
+  but wrong by the fixture. The baseline was amended
+  (baseline-2026-08-11.md removed the priority from sc-22) and the
+  fixture setup now explicitly sits ON the team, matching the prompt's
+  "team's board" phrasing.

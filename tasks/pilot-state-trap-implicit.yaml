@@ -1,0 +1,23 @@
+id: state-trap-implicit
+class: state-trap
+prompt: >
+  Reply with just the story ids of the stories I'm currently working
+  on, comma-separated.
+expected_tools:
+  shortcut-handbuilt: [list_my_stories, list_team_stories]
+grade:
+  - answer_ids: { equals_state: "In Progress" }
+  - workspace_unchanged: true
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Companion to state-name-vs-type; restores the softened-prompt trigger
+  the hand-exam surfaced. The prompt phrases the state trap implicitly
+  ("stories I'm currently working on") rather than by explicit column
+  name. The trap is expected to fire at the QUERY level: naive lanes
+  resolving "working on" through a type filter (state:started) sweep
+  In Review stories in, while the canonical answer key is only the
+  ids of stories currently in the workflow state literally named
+  "In Progress". Descends from handbuilt-vs-naive.md §4a. Answer key
+  computed live at grading time.

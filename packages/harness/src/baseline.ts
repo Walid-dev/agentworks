@@ -1,8 +1,13 @@
-import { fetchTeamStories, type LiveStory } from "./shortcut.js";
+import { fetchAllStories, type LiveStory } from "./shortcut.js";
 
-// Documented baseline from docs/reports/naive-first-run.md, verified
-// 2026-08-08. The set of stories, their titles, states, epic
-// membership, and story_type — exactly this, nothing else.
+// Documented baseline from docs/reports/baseline-2026-08-11.md — the
+// authoritative successor to naive-first-run.md's baseline section.
+// The set of stories, their titles, states, epic membership,
+// story_type — exactly this, nothing else, workspace-wide.
+//
+// TEAM_MENTION_NAME is kept for tasks that want to declare team as an
+// assertion on a story field; it is NOT used to scope any grader
+// query. See docs/specs/graders.md for the resolution rule.
 
 export const TEAM_MENTION_NAME = "walid-hls-team";
 
@@ -92,7 +97,7 @@ export type BaselineResult = {
 };
 
 export async function checkBaseline(token: string): Promise<BaselineResult> {
-	const live = await fetchTeamStories(token, TEAM_MENTION_NAME);
+	const live = await fetchAllStories(token);
 	const liveIds = new Set(live.map((s) => s.id));
 	const expectedIds = new Set(BASELINE_STORIES.map((s) => s.id));
 	const issues: string[] = [];
@@ -141,8 +146,10 @@ export async function checkBaseline(token: string): Promise<BaselineResult> {
 }
 
 // Simple side-effect-free snapshot used by teardown to identify strays
-// created during an attempt.
+// created during an attempt. Workspace-wide so teamless artifacts are
+// visible — the 1.7 pilot left ten teamless strays undetected because
+// this was team-scoped.
 export async function snapshotIdSet(token: string): Promise<Set<number>> {
-	const live = await fetchTeamStories(token, TEAM_MENTION_NAME);
+	const live = await fetchAllStories(token);
 	return new Set(live.map((s: LiveStory) => s.id));
 }

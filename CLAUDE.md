@@ -69,6 +69,13 @@ seems useful.
   system for it before inventing one. If the canon is silent and the
   system is too, ask before choosing; a chosen default is a decision,
   and decisions belong to the human.
+- Instructions arrive carrying factual premises: what exists, what a
+  file says, counts, prior state, costs. Verify every checkable
+  premise against the repo before executing; a false premise STOPS
+  the work with the discrepancy named and evidence quoted (the
+  exit-criterion reconcile is the model). Disagreement with an
+  instruction's judgment is different: raise it once, in one line,
+  then defer to the human's ruling.
 
 ## Committing
 Write REPORT.md only when asked, and OVERWRITE it every time. Scope:

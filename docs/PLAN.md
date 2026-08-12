@@ -248,8 +248,6 @@ provenance disclosure as the curated toolset.
   (10 baseline stories) after the sweep; unit tests for the tolerance
   edges (`packages/harness/src/graders.test.ts`).
 
-### TODO
-
 - **1.8 Pilot review and format lock.** Owner: W.
   Read the three pilot runs' outputs. Confirm the golden-task format
   and the harness produce the intended discrimination: chores in the
@@ -257,10 +255,13 @@ provenance disclosure as the curated toolset.
   axis. If they do not, revise the format spec (1.1) or the graders
   (1.7) before mass authoring. This is the gate before scaling from 3
   to ~20 tasks.
-  Evidence: `docs/reports/phase1-pilot-review.md`, ending with an
-  explicit "format locked" line or a list of revisions and the follow-up
-  commits landing them.
-  Commit: `docs(reports): lock phase 1 golden-task and harness format`
+  Evidence: `docs/reports/pilot-gate.md` (gate record with both pilot
+  sweeps, the 4/4 prediction scorecard, and the audited findings),
+  plus the committed re-pilot transcripts at
+  `runs/2026-08-12T13-31-52-323Z/`. Format locked; scale-up authorized
+  for 1.9.
+
+### TODO
 
 - **1.9 Author the full golden-task set (20 to 25 tasks).** Owner: AI.
   Author the remaining golden tasks per the locked format, covering

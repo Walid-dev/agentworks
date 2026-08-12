@@ -4,6 +4,29 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-12 — Pilot gate closed (PLAN.md 1.8). Prediction scorecard
+  from pilot 2 (sweep 2026-08-12T13-31-52-323Z, 4×2×3, driver
+  claude-sonnet-4-6, caching off): 4/4 registered predictions
+  confirmed on aggregate outcomes; the softened state-trap prediction
+  exceeded on mechanism, replicating across three distinct
+  naive query paths (is:started, workflow_state_types:["started"],
+  state:started) that all reduced "working on" to the started type
+  and returned {17, 23}. Full record in
+  docs/reports/pilot-gate.md.
+- 2026-08-12 — Phrasing-dependency result: within one sweep, one
+  driver, one lane (shortcut-naive), state-name-vs-type (prompt
+  names the column) passed 3/3 while state-trap-implicit (softened
+  phrasing) failed 3/3. The state-vs-type trap is a query-level
+  behavior induced by the prompt's phrasing, not a lane-intrinsic
+  failure. Locks task-authoring guidance: state-trap phrasings must
+  be explicitly categorized in 1.9 as named-column vs softened.
+- 2026-08-12 — Required-parameter design lesson (first measured input
+  to the Phase 2 Designer): a tool with a required argument the
+  prompt doesn't supply produces zero tool calls at n=6 (curated
+  triage across both pilots), regardless of driver capability. The
+  Designer must either surface listable-defaults for required
+  arguments, or make the argument optional with a lookup path, or
+  the prompt-and-tool pair produces clarify-reflex instead of work.
 - 2026-08-11 — Pilot 1 findings (sweep 2026-08-11T21-17-39-312Z):
   (a) triage-highest-priority's answer key was non-unique — sc-22 in
   the baseline carried Priority=Highest alongside the fixture; agents

@@ -279,6 +279,21 @@ provenance disclosure as the curated toolset.
 
 ### TODO
 
+- **1.9b Build Runtime C — OpenAI seat.** Owner: AI.
+  Second AgentRuntime implementation behind the same interface as
+  Runtime A. Raw openai SDK, same per-attempt lifecycle (amnesiac,
+  turn cap, MCP client over stdio, identical system prompt). Enables
+  the cross-family replication lane per the 2026-08-12 driver budget
+  ruling in `docs/decisions.md`. No paid model calls in this step:
+  verification is free dry-run against both existing Shortcut lanes
+  plus shape-mapping unit tests that pin the request assembly and
+  the tool-result echo path.
+  Evidence: `packages/harness/src/runtime.ts` gains an
+  `openaiRuntime` alongside `bareLoopRuntime`; unit tests for
+  input-shape assembly and message-role mapping; green dry-run
+  sweep at the current suite size.
+  Commit: `feat(harness): add openai runtime behind agentruntime`
+
 - **1.10 Run the two-lane sweep and produce Benchmark Report #1
   (curated vs naive).** Owner: AI.
   Full sweep on the two local stdio lanes only: every golden task ×
@@ -289,6 +304,11 @@ provenance disclosure as the curated toolset.
   pin-at-first-use rule; recorded in `docs/decisions.md`.** Compare
   the two lanes across the metric set in `docs/STACK.md` "Metrics".
   No verdict beyond what the numbers say; the report is the numbers.
+  **Amendment (2026-08-12 driver budget ruling): caching is enabled
+  (Runtime A prompt-caching lands as its own commit prior to this
+  sweep); the second sweep tier is Runtime C on `gpt-5.6-terra` per
+  1.9b rather than the superseded opus pin; pre-launch cost
+  projection must be under $14 or stop and ask.**
   Evidence: `docs/reports/benchmark-1.md` plus `runs/bench.sqlite`;
   one new decisions.md line pinning the `smoke` driver id.
   Commit: `docs(reports): benchmark report 1`

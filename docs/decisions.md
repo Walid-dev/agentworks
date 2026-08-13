@@ -4,6 +4,14 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-12 — Driver budget ruling (owner): Report #1's headline
+  completes on claude-sonnet-4-6 as pinned, within a hard $15
+  remaining-Anthropic cap. The 2026-08-10 opus second-tier pin is
+  SUPERSEDED on cost: the second sweep runs on OpenAI
+  (gpt-5.6-terra), serving as the cross-family replication lane.
+  After Report #1, OpenAI is the default for all paid harness
+  attempts; Anthropic drivers run only where a decision names them.
+  All findings remain labeled with their driver.
 - 2026-08-12 — Pilot gate closed (PLAN.md 1.8). Prediction scorecard
   from pilot 2 (sweep 2026-08-12T13-31-52-323Z, 4×2×3, driver
   claude-sonnet-4-6, caching off): 4/4 registered predictions

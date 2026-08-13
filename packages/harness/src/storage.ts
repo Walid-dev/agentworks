@@ -30,6 +30,12 @@ export type AttemptRow = {
 	invalid_tool_calls: number | null;
 	input_tokens: number | null;
 	output_tokens: number | null;
+	// 1.10-prep: separate cache_read from uncached input. Report #1's
+	// cost table needs them addressable via SQL. Runtime C leaves both
+	// at zero (OpenAI's automatic prefix caching doesn't report the
+	// same fields).
+	cache_creation_input_tokens: number | null;
+	cache_read_input_tokens: number | null;
 	wall_ms: number | null;
 	expected_tools_only: number | null;
 	stop_reason: string | null;
@@ -58,6 +64,8 @@ export function openBench(path: string): Database.Database {
 			invalid_tool_calls INTEGER,
 			input_tokens INTEGER,
 			output_tokens INTEGER,
+			cache_creation_input_tokens INTEGER,
+			cache_read_input_tokens INTEGER,
 			wall_ms INTEGER,
 			expected_tools_only INTEGER,
 			stop_reason TEXT,
@@ -77,13 +85,15 @@ export function insertAttempt(db: Database.Database, row: AttemptRow): void {
 			run_stamp, sweep_id, task_id, lane_id, driver_id, status,
 			grade_status, teardown_status, teardown_error, reason,
 			transcript_path, turns, tool_calls_total, invalid_tool_calls,
-			input_tokens, output_tokens, wall_ms, expected_tools_only,
+			input_tokens, output_tokens, cache_creation_input_tokens,
+			cache_read_input_tokens, wall_ms, expected_tools_only,
 			stop_reason, grade_json
 		) VALUES (
 			@run_stamp, @sweep_id, @task_id, @lane_id, @driver_id, @status,
 			@grade_status, @teardown_status, @teardown_error, @reason,
 			@transcript_path, @turns, @tool_calls_total, @invalid_tool_calls,
-			@input_tokens, @output_tokens, @wall_ms, @expected_tools_only,
+			@input_tokens, @output_tokens, @cache_creation_input_tokens,
+			@cache_read_input_tokens, @wall_ms, @expected_tools_only,
 			@stop_reason, @grade_json
 		)`,
 	).run(row);
@@ -139,6 +149,9 @@ export function rowFromGrade(args: {
 		invalid_tool_calls: g?.measurements.invalid_tool_calls ?? null,
 		input_tokens: g?.measurements.input_tokens ?? null,
 		output_tokens: g?.measurements.output_tokens ?? null,
+		cache_creation_input_tokens:
+			g?.measurements.cache_creation_input_tokens ?? null,
+		cache_read_input_tokens: g?.measurements.cache_read_input_tokens ?? null,
 		wall_ms: g?.measurements.wall_ms ?? null,
 		expected_tools_only:
 			g?.measurements.expected_tools_only === null

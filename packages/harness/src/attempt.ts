@@ -213,6 +213,8 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 		stop_reason: runtimeResult.stop_reason,
 		input_tokens: runtimeResult.input_tokens,
 		output_tokens: runtimeResult.output_tokens,
+		cache_creation_input_tokens: runtimeResult.cache_creation_input_tokens,
+		cache_read_input_tokens: runtimeResult.cache_read_input_tokens,
 		at: new Date().toISOString(),
 	});
 

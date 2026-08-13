@@ -29,6 +29,13 @@ export type Measurements = {
 	invalid_tool_calls: number;
 	input_tokens: number;
 	output_tokens: number;
+	// 1.10-prep: separate cache_read from uncached input so Report #1's
+	// cost table distinguishes "cheap because cached" from "cheap
+	// because small". Runtime A wires Anthropic prompt caching; Runtime
+	// C's OpenAI seat will leave these zero (its automatic prefix
+	// caching does not report the same fields).
+	cache_creation_input_tokens: number;
+	cache_read_input_tokens: number;
 	wall_ms: number;
 	tools_called: string[];
 	tools_expected: string[] | null;
@@ -156,6 +163,8 @@ function computeMeasurements(
 				stop_reason?: string | null;
 				input_tokens?: number;
 				output_tokens?: number;
+				cache_creation_input_tokens?: number;
+				cache_read_input_tokens?: number;
 		  }
 		| undefined;
 	const start = meta
@@ -181,6 +190,8 @@ function computeMeasurements(
 		invalid_tool_calls: invalidToolCallCount(events),
 		input_tokens: finalAns?.input_tokens ?? 0,
 		output_tokens: finalAns?.output_tokens ?? 0,
+		cache_creation_input_tokens: finalAns?.cache_creation_input_tokens ?? 0,
+		cache_read_input_tokens: finalAns?.cache_read_input_tokens ?? 0,
 		wall_ms: start && end ? end - start : 0,
 		tools_called: called,
 		tools_expected: expected ?? null,

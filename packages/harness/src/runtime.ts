@@ -21,12 +21,81 @@ export const SYSTEM_PROMPT =
 export const MAX_TURNS = 10;
 export const MAX_TOKENS = 4096;
 
+// Anthropic prompt-caching helpers (Runtime A only).
+// Two breakpoints per request, both ephemeral: (1) the system prompt,
+// (2) the LAST tool definition (which caches the whole tool block).
+// Growing conversation stays uncached. Runtime C will implement
+// OpenAI's automatic prefix caching separately — DO NOT generalize
+// these helpers past Anthropic's Messages API.
+
+export type CachedSystemBlock = {
+	type: "text";
+	text: string;
+	cache_control: { type: "ephemeral" };
+};
+
+export function buildCachedSystem(prompt: string): CachedSystemBlock[] {
+	return [{ type: "text", text: prompt, cache_control: { type: "ephemeral" } }];
+}
+
+// Returns Tool[] with cache_control set on the last entry only. The
+// SDK's Tool type already carries cache_control as optional; a
+// re-typed alias would only cause friction — pass Tool[] through.
+export function buildCachedTools(tools: Tool[]): Tool[] {
+	if (tools.length === 0) return tools;
+	return tools.map((t, i) =>
+		i === tools.length - 1
+			? { ...t, cache_control: { type: "ephemeral" as const } }
+			: t,
+	);
+}
+
+export type AnthropicUsage = {
+	input_tokens: number;
+	output_tokens: number;
+	cache_creation_input_tokens?: number | null;
+	cache_read_input_tokens?: number | null;
+};
+
+export type UsageAggregate = {
+	input_tokens: number;
+	output_tokens: number;
+	cache_creation_input_tokens: number;
+	cache_read_input_tokens: number;
+};
+
+export function emptyUsageAggregate(): UsageAggregate {
+	return {
+		input_tokens: 0,
+		output_tokens: 0,
+		cache_creation_input_tokens: 0,
+		cache_read_input_tokens: 0,
+	};
+}
+
+export function accumulateUsage(
+	agg: UsageAggregate,
+	usage: AnthropicUsage,
+): UsageAggregate {
+	return {
+		input_tokens: agg.input_tokens + (usage.input_tokens ?? 0),
+		output_tokens: agg.output_tokens + (usage.output_tokens ?? 0),
+		cache_creation_input_tokens:
+			agg.cache_creation_input_tokens +
+			(usage.cache_creation_input_tokens ?? 0),
+		cache_read_input_tokens:
+			agg.cache_read_input_tokens + (usage.cache_read_input_tokens ?? 0),
+	};
+}
+
 export type RuntimeResult = {
 	turns: number;
 	final_message: string;
 	stop_reason: string | null;
 	input_tokens: number;
 	output_tokens: number;
+	cache_creation_input_tokens: number;
+	cache_read_input_tokens: number;
 };
 
 export type RuntimeOpts = {
@@ -74,6 +143,12 @@ export const bareLoopRuntime: AgentRuntime = {
 				properties: {},
 			}) as Tool["input_schema"],
 		}));
+		// Anthropic cache breakpoints: system prompt and the last tool
+		// definition. Both blocks are byte-identical across every turn
+		// AND every attempt within a lane, which is where the discount
+		// lives.
+		const cachedSystem = buildCachedSystem(SYSTEM_PROMPT);
+		const cachedTools = buildCachedTools(tools);
 		opts.log({
 			type: "tools_available",
 			count: tools.length,
@@ -94,8 +169,7 @@ export const bareLoopRuntime: AgentRuntime = {
 			at: new Date().toISOString(),
 		});
 
-		let inputTokens = 0;
-		let outputTokens = 0;
+		let usage: UsageAggregate = emptyUsageAggregate();
 		let finalMessage = "";
 		let lastStopReason: string | null = null;
 		let turn = 0;
@@ -105,12 +179,13 @@ export const bareLoopRuntime: AgentRuntime = {
 			const response = await client.messages.create({
 				model: opts.driverId,
 				max_tokens: MAX_TOKENS,
-				system: SYSTEM_PROMPT,
-				tools,
+				// system accepts `string | TextBlockParam[]`; the cached
+				// form is the array shape.
+				system: cachedSystem as unknown as string,
+				tools: cachedTools,
 				messages,
 			});
-			inputTokens += response.usage.input_tokens;
-			outputTokens += response.usage.output_tokens;
+			usage = accumulateUsage(usage, response.usage as AnthropicUsage);
 			lastStopReason = response.stop_reason;
 			opts.log({
 				type: "assistant",
@@ -184,8 +259,10 @@ export const bareLoopRuntime: AgentRuntime = {
 			turns: turn,
 			final_message: finalMessage,
 			stop_reason: lastStopReason,
-			input_tokens: inputTokens,
-			output_tokens: outputTokens,
+			input_tokens: usage.input_tokens,
+			output_tokens: usage.output_tokens,
+			cache_creation_input_tokens: usage.cache_creation_input_tokens,
+			cache_read_input_tokens: usage.cache_read_input_tokens,
 		};
 	},
 };

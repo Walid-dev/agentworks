@@ -1,0 +1,30 @@
+id: write-create-with-tasks
+class: write
+prompt: >
+  Create a story called "Ship dashboard v2 {{run}}" for my team,
+  story type chore, assigned to me, due 2026-11-15 end of day Toronto
+  time. Attach three tasks: "reproduce", "fix", "verify".
+expected_tools:
+  shortcut-handbuilt: [create_story]
+grade:
+  - story_exists:
+      title: "Ship dashboard v2 {{run}}"
+      team: "Walid Hl's Team"
+      story_type: chore
+      owner_is_self: true
+      deadline_within: { date: "2026-11-15", timezone: "America/Toronto" }
+      tasks: ["reproduce", "fix", "verify"]
+tolerances:
+  casing: insensitive
+  date_window: { timezone: "America/Toronto" }
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §3 chore 5 and §5b — the
+  create-with-tasks pattern the hand exam surfaced as
+  timezone-sensitive and case-sensitive. Combines every write axis
+  in one create: title, team, story_type, owner assignment (whoami
+  dependence), timezone-pinned deadline, and task checklist. Pins
+  ABSOLUTE date and Toronto timezone per authoring law. The tasks[]
+  set-comparison is case-insensitive (task tolerance) so "reproduce"
+  and "Reproduce" both satisfy the check, but the SET must match
+  exactly — an extra or missing task fails.

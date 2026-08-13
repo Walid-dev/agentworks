@@ -1,0 +1,40 @@
+id: info-epic-writeback
+class: info-vs-cost
+prompt: >
+  Some stories on the team's board are grouped under an epic and one
+  is not. Create a summary story called "Epic audit {{run}}" for my
+  team, story type chore. In the description, write only the story
+  id number that is NOT under any epic — a single integer, no
+  prefix, no other words.
+expected_tools: {}
+grade:
+  - story_exists:
+      title: "Epic audit {{run}}"
+      team: "Walid Hl's Team"
+      story_type: chore
+      description_contains: "30"
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §5a and §4c — the
+  information-loss vs coordination-cost trade-off applied to
+  epic-linkage. The agent must identify which team story is not
+  under an epic and write its id number into the summary
+  description. Curated's get_story trims epic_id entirely — the
+  agent has no way to determine epic membership authoritatively
+  and will guess or say "unknown" — fails description_contains
+  "30". Naive exposes epic_id — the agent sees sc-30 has
+  epic_id=null — passes.
+
+  Baseline-scale caveat: description_contains "30" matches on the
+  substring "30", which is uniquely identifying in the current
+  10-story baseline (docs/reports/baseline-2026-08-11.md — sc-30
+  is the UNIQUELY epicless workspace story). At larger scales this
+  substring would collide with sc-130, sc-230, sc-300, sc-2030,
+  etc. — any story whose id contains the digits "30". The 1.9-gate
+  prompt-tightening ("write only the story id number ... a single
+  integer, no prefix, no other words") narrows the agent's answer
+  format so this fragility is scoped to the grader-substring
+  choice, not the agent's phrasing. Revisit when workspace scale
+  or task volume changes the baseline arithmetic.

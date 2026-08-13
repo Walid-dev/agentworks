@@ -1,0 +1,32 @@
+id: dup-near-detect
+class: duplicate-check
+prompt: >
+  A teammate wants to file a story called "Login timeout fix" for
+  their day. Is there already something on the team's board that
+  covers this? Reply with just the id of the closest match, or with
+  "none" if there is nothing close.
+expected_tools:
+  shortcut-handbuilt: [find_stories]
+setup:
+  - ref: dup-target
+    title: "Fix login timeout {{run}}"
+    state: "To Do"
+    story_type: bug
+    team: "Walid Hl's Team"
+grade:
+  - answer_ids: { equals_fixture: "dup-target" }
+  - workspace_unchanged: true
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §6 duplicate-check readiness,
+  near-title variant. The fixture title shares the same tokens as
+  the teammate's proposed title (login, timeout, fix) but reordered
+  with "Fix" as the verb rather than the noun. The agent must
+  recognize the near-match. Answer key: the fixture's live id
+  (equals_fixture, single-id set). If the agent answers "none",
+  extractIds returns an empty set that mismatches the expected set
+  and fails. workspace_unchanged asserts the agent didn't create
+  anything new. Uniqueness: {{run}} on the fixture title guarantees
+  no collision.

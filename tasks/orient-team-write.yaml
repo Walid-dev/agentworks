@@ -1,0 +1,28 @@
+id: orient-team-write
+class: orientation
+prompt: >
+  Create a story called "Team probe {{run}}" on my team's board, story
+  type chore, assigned to me. Due 2026-10-15 end of day Toronto time.
+expected_tools:
+  shortcut-handbuilt: [list_workspace_vocabulary, whoami, create_story]
+grade:
+  - story_exists:
+      title: "Team probe {{run}}"
+      team: "Walid Hl's Team"
+      story_type: chore
+      owner_is_self: true
+      deadline_within: { date: "2026-10-15", timezone: "America/Toronto" }
+tolerances:
+  casing: insensitive
+  date_window: { timezone: "America/Toronto" }
+provenance: ai-drafted, human-reviewed
+notes: >
+  Orientation via team-vocabulary: the prompt says "my team" without
+  naming it. The agent must consult team vocabulary (curated:
+  list_workspace_vocabulary; naive: /groups) before it can set
+  group_id. Descends from pilot-gate.md F3 — required parameters the
+  prompt doesn't supply produce clarify-reflex on curated at n=6.
+  Here the prompt is a WRITE, so the reflex must be resolved via a
+  listing tool rather than a question back to the operator. Grade
+  team assertion catches a create that lands teamless (group_id
+  null). Uniqueness: {{run}} on the title.

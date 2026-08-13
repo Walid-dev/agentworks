@@ -1,0 +1,25 @@
+id: state-done-explicit
+class: state-trap
+prompt: >
+  Which stories are in the Done column? Reply with just the story ids,
+  comma-separated.
+expected_tools:
+  shortcut-handbuilt: [list_team_stories]
+grade:
+  - answer_ids: { equals_state: "Done" }
+  - workspace_unchanged: true
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Control for the state-trap class — the EXPLICIT named-column
+  variant. Descends from handbuilt-vs-naive.md §4a and pilot-gate.md
+  F2 (within-sweep phrasing contrast): naming the column directly
+  makes the trap unlikely to fire on either lane; passing on naive
+  here confirms the softened phrasing (state-backlog-implicit) is
+  what triggers the type-vs-name confusion, not the state itself.
+  Answer key: state:"Done" workspace-wide; from
+  docs/reports/baseline-2026-08-11.md that is exactly {sc-19}.
+  Uniqueness: sc-19 is the ONLY baseline story in Done state.
+  Phrasing decision: EXPLICIT, paired with the implicit
+  state-backlog-implicit above.

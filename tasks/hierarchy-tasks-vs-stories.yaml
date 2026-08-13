@@ -1,0 +1,38 @@
+id: hierarchy-tasks-vs-stories
+class: hierarchy
+prompt: >
+  I have three sub-tasks I need to track: "reproduce the login
+  timeout", "apply the fix", "verify the fix". Attach them as
+  checklist items to a NEW parent story called "Login timeout
+  investigation {{run}}" for my team, story type chore, assigned to
+  me, due 2026-12-01 end of day Toronto time.
+expected_tools:
+  shortcut-handbuilt: [create_story]
+grade:
+  - story_exists:
+      title: "Login timeout investigation {{run}}"
+      team: "Walid Hl's Team"
+      story_type: chore
+      owner_is_self: true
+      deadline_within: { date: "2026-12-01", timezone: "America/Toronto" }
+      tasks:
+        - "reproduce the login timeout"
+        - "apply the fix"
+        - "verify the fix"
+tolerances:
+  casing: insensitive
+  date_window: { timezone: "America/Toronto" }
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §4b — invented-hierarchy
+  susceptibility, tasks-vs-stories confusion variant. The prompt
+  uses "sub-tasks" and "checklist items" to invite the confusion of
+  creating three separate STORIES instead of one story with three
+  tasks attached. Curated's create_story accepts tasks inline;
+  naive's createStory takes tasks in the requestBody. The
+  story_exists.tasks[] set-comparison catches: (a) a missing task
+  description (empty or partial task list on the parent), and
+  (b) invented-hierarchy where the agent creates 3 separate
+  stories with task-like titles — in which case no story titled
+  "Login timeout investigation ..." exists at all and story_exists
+  fails at title match. Uniqueness: {{run}} on the parent title.

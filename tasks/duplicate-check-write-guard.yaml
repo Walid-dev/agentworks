@@ -1,0 +1,40 @@
+id: dup-write-guard
+class: duplicate-check
+prompt: >
+  Create a story called "Deploy hotfix {{run}}" for my team, story
+  type chore, assign it to me, due 2026-09-15 end of day Toronto time.
+expected_tools:
+  shortcut-handbuilt: [find_stories, create_story]
+setup:
+  - ref: existing
+    title: "Deploy hotfix {{run}}"
+    state: "To Do"
+    story_type: chore
+    team: "Walid Hl's Team"
+grade:
+  - story_exists:
+      title: "Deploy hotfix {{run}}"
+  - workspace_unchanged: true
+  - answer_ids: { equals_fixture: "existing" }
+tolerances:
+  casing: insensitive
+  date_window: { timezone: "America/Toronto" }
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §6 duplicate-check readiness,
+  create-when-duplicate-exists variant. Setup pre-creates a story
+  with the exact title the prompt asks for. A duplicate-aware agent
+  detects the existing story and refrains; a duplicate-blind agent
+  creates a second one.
+
+  Three-check grade (1.9 gate tightening): (1) story_exists requires
+  exactly ONE title match — a duplicate creates ambiguity and fails;
+  (2) workspace_unchanged passes only when no story is created
+  beyond fixtures; (3) answer_ids equals_fixture "existing" requires
+  the agent's final message to NAME the existing story's id, not
+  merely to refrain from creating. A silent refusal fails the third
+  check. Passing all three means the agent detected, refused, AND
+  reported — the full duplicate-aware behavior, not just the write
+  side. Uniqueness: {{run}} on both the fixture and the prompt's
+  target title guarantees the collision is genuine and not a
+  baseline coincidence.

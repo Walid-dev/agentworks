@@ -1,0 +1,27 @@
+id: dup-exact-detect
+class: duplicate-check
+prompt: >
+  Is there already a story titled "Fix login timeout {{run}}" on the
+  team's board? Reply with just its story id.
+expected_tools:
+  shortcut-handbuilt: [find_stories]
+setup:
+  - ref: dup-target
+    title: "Fix login timeout {{run}}"
+    state: "To Do"
+    story_type: bug
+    team: "Walid Hl's Team"
+grade:
+  - answer_ids: { equals_fixture: "dup-target" }
+  - workspace_unchanged: true
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §6 duplicate-check readiness,
+  exact-title variant. Setup pre-creates the target story; the
+  agent's job is to find it and report its id. Answer key: the
+  fixture's live id (equals_fixture). workspace_unchanged asserts
+  the agent didn't create anything new (this is a read task).
+  Uniqueness: {{run}} on the fixture title so no collision with
+  baseline or concurrent sweeps.

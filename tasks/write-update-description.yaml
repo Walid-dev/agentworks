@@ -1,0 +1,27 @@
+id: write-update-description
+class: write
+prompt: >
+  Update the story titled "Update probe {{run}}" so its description
+  contains "Blocked on staging migration".
+expected_tools:
+  shortcut-handbuilt: [find_stories, update_story]
+setup:
+  - ref: subject
+    title: "Update probe {{run}}"
+    state: "To Do"
+    story_type: chore
+    team: "Walid Hl's Team"
+grade:
+  - story_exists:
+      title: "Update probe {{run}}"
+      description_contains: "Blocked on staging migration"
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §3 chore 7 update mechanics.
+  Tests field-level update via curated's update_story or naive's
+  updateStory. Grade uses description_contains (substring check with
+  casing tolerance) rather than exact-match so the agent can phrase
+  the surrounding description naturally around the pinned substring.
+  Uniqueness: {{run}} on the fixture title.

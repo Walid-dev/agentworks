@@ -1,0 +1,38 @@
+id: info-priority-writeback
+class: info-vs-cost
+prompt: >
+  Look at the story titled "Priority signal {{run}}" on the team's
+  board. Create a follow-up note story called "Priority note {{run}}"
+  for my team, story type chore. In the description, state the
+  priority level of the source story.
+expected_tools: {}
+setup:
+  - ref: source
+    title: "Priority signal {{run}}"
+    state: "To Do"
+    story_type: chore
+    priority: "Highest"
+    team: "Walid Hl's Team"
+grade:
+  - story_exists:
+      title: "Priority note {{run}}"
+      team: "Walid Hl's Team"
+      story_type: chore
+      description_contains: "Highest"
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §5a and pilot-gate.md F4 — the
+  priority-trimming test converted from an ambiguous
+  clarify-blocking prompt (which the pilot showed never reaches the
+  designed priority wall) into a write-back where the clarify path
+  is closed by naming the source story explicitly. The agent must
+  READ the source story's priority and WRITE it into a note's
+  description. Curated's get_story trims custom_fields including
+  priority — the agent has no way to see "Highest" and will guess
+  or omit — fails description_contains "Highest". Naive exposes
+  custom_fields — agent transcribes "Highest" — passes.
+  expected_tools is empty on purpose: no single right path, only a
+  right answer. Uniqueness: {{run}} on both the source and note
+  titles.

@@ -1,0 +1,28 @@
+id: write-move-by-name
+class: write
+prompt: >
+  Move the story titled "Move by name probe {{run}}" from To Do to
+  In Progress.
+expected_tools:
+  shortcut-handbuilt: [find_stories, move_story]
+setup:
+  - ref: mover
+    title: "Move by name probe {{run}}"
+    state: "To Do"
+    story_type: chore
+    team: "Walid Hl's Team"
+grade:
+  - story_exists:
+      title: "Move by name probe {{run}}"
+      state_name: "In Progress"
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §3 chore 6 move mechanics. The
+  agent must (a) find the story by title, (b) know the state name
+  "In Progress", (c) move via the appropriate tool. Curated's
+  move_story takes state as a required name and validates against
+  the workflow states; naive lanes use updateStory with
+  workflow_state_id and require the state-id lookup upfront.
+  Uniqueness: {{run}} on the fixture title.

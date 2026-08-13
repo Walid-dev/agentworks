@@ -1,0 +1,27 @@
+id: write-comment-on-story
+class: write
+prompt: >
+  Comment on the story titled "Comment probe {{run}}" with "found the
+  cause, cache invalidation".
+expected_tools:
+  shortcut-handbuilt: [find_stories, comment_on_story]
+setup:
+  - ref: subject
+    title: "Comment probe {{run}}"
+    state: "In Progress"
+    story_type: chore
+    team: "Walid Hl's Team"
+grade:
+  - comment_on:
+      story: "subject"
+      text_contains: "found the cause, cache invalidation"
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §3 chore 4 comment mechanics.
+  Setup creates the subject fixture on the team's board; the agent
+  must find it and post a comment. comment_on grader resolves via
+  the fixture ref (not by title search) and reads live comments,
+  filtering soft-deleted ones per the Phase 0 cleanup finding.
+  Uniqueness: {{run}} on the fixture title.

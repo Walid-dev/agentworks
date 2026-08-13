@@ -261,17 +261,23 @@ provenance disclosure as the curated toolset.
   `runs/2026-08-12T13-31-52-323Z/`. Format locked; scale-up authorized
   for 1.9.
 
-### TODO
-
 - **1.9 Author the full golden-task set (20 to 25 tasks).** Owner: AI.
   Author the remaining golden tasks per the locked format, covering
   every §8 candidate class. Each task's grader block deterministic
   against Shortcut ground truth; tolerances declared explicitly.
   Disclosure: tasks are AI-authored under human review, per the same
   provenance line the curated toolset carries.
-  Evidence: `tasks/*.yaml` — 20 to 25 files total (pilots included),
-  all zod-validating.
-  Commit: `feat(tasks): add remaining phase 1 golden tasks`
+  Evidence: `tasks/*.yaml` — 20 files (4 pilots + 16 new), all
+  zod-validating; green dry-run 40/40 across 20 tasks × 2 lanes ×
+  1 rep at sweep `2026-08-12T18-20-37-128Z`. Class coverage: 4
+  state-trap (2 implicit / 2 explicit pair), 3 duplicate-check
+  (exact, near, write-guard), 3 orientation (whoami, team-vocab,
+  state-vocab), 5 write (deadline pilot + comment / move-by-name /
+  update / create-with-tasks), 4 info-vs-cost (triage pilot +
+  priority-writeback + epic-writeback), 2 hierarchy (epic-mates,
+  tasks-vs-stories).
+
+### TODO
 
 - **1.10 Run the two-lane sweep and produce Benchmark Report #1
   (curated vs naive).** Owner: AI.

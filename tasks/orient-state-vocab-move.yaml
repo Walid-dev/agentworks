@@ -1,0 +1,28 @@
+id: orient-state-vocab-move
+class: orientation
+prompt: >
+  Move the story titled "Move probe {{run}}" to In Review.
+expected_tools:
+  shortcut-handbuilt: [find_stories, move_story]
+setup:
+  - ref: mover
+    title: "Move probe {{run}}"
+    state: "To Do"
+    story_type: chore
+    team: "Walid Hl's Team"
+grade:
+  - story_exists:
+      title: "Move probe {{run}}"
+      state_name: "In Review"
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Orientation via state names: the agent must find the fixture and
+  then use the state name "In Review" to move it. Descends from
+  handbuilt-vs-naive.md §4a and pilot-gate.md F2 — state-name grasp
+  under an explicit prompt. Fixture starts in "To Do" so the move is
+  observable at grade time; teardown deletes the moved fixture.
+  Grade asserts the state name on the fixture, not on a baseline
+  story, so a wrong move (say, to "In Progress") fails specifically.
+  Uniqueness: {{run}} on the fixture title.

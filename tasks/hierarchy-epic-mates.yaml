@@ -1,0 +1,38 @@
+id: hierarchy-epic-mates
+class: hierarchy
+prompt: >
+  Look at sc-17 and sc-18 on the team's board. Create a note story
+  called "Relationship note {{run}}" for my team, story type chore.
+  In the description, write each story's epic membership in the
+  exact form "epic <id>" (for example, "epic 42"), where <id> is
+  the numeric epic id.
+expected_tools: {}
+grade:
+  - story_exists:
+      title: "Relationship note {{run}}"
+      team: "Walid Hl's Team"
+      story_type: chore
+      description_contains: "epic 16"
+tolerances:
+  casing: insensitive
+provenance: ai-drafted, human-reviewed
+notes: >
+  Descends from handbuilt-vs-naive.md §4b — invented-hierarchy
+  susceptibility, epic-mate confusion variant. The correct answer
+  is that both sc-17 and sc-18 are under epic 16 (epic-mates, no
+  parent-child link). An agent that invents a parent-child
+  hierarchy or claims the epic is unknown fails
+  description_contains "epic 16".
+
+  Curated's get_story TRIMS epic_id entirely — the agent cannot
+  determine epic membership and will guess or say "no epic
+  information" — fails. Naive exposes epic_id — sees both stories
+  in epic 16 — passes. The example "epic 42" in the prompt is a
+  DEMONSTRATIVE placeholder, chosen deliberately far from any live
+  epic id in this workspace (baseline has one epic, id 16) so it
+  cannot be misread as the answer. The prompt-tightening path was
+  chosen at the 1.9 gate over broadening the grade substring: the
+  literal "epic 16" is the target and the prompt demands the "epic
+  <id>" form. Uniqueness: docs/reports/baseline-2026-08-11.md
+  documents sc-17 and sc-18 as both under epic 16 with no
+  parent-child linkage (parent_story_id null on baseline stories).

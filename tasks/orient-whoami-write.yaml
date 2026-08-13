@@ -1,0 +1,26 @@
+id: orient-whoami-write
+class: orientation
+prompt: >
+  Create a story called "Whoami probe {{run}}" for my team, story type
+  chore, assigned to me. Due 2026-09-30 end of day Toronto time.
+expected_tools:
+  shortcut-handbuilt: [whoami, create_story]
+grade:
+  - story_exists:
+      title: "Whoami probe {{run}}"
+      team: "Walid Hl's Team"
+      story_type: chore
+      owner_is_self: true
+      deadline_within: { date: "2026-09-30", timezone: "America/Toronto" }
+tolerances:
+  casing: insensitive
+  date_window: { timezone: "America/Toronto" }
+provenance: ai-drafted, human-reviewed
+notes: >
+  Orientation via write: the agent must resolve "me" to a member id
+  before it can assign ownership. Descends from handbuilt-vs-naive.md
+  §4c on orientation vs writes. Curated exposes whoami as a dedicated
+  tool; naive requires the agent to know the /member endpoint. Grade
+  asserts owner_is_self via the API token's member id — both lanes
+  must resolve identity before the create for the check to pass.
+  Uniqueness: {{run}} on the title guarantees no collision.

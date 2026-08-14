@@ -110,7 +110,7 @@ export interface AgentRuntime {
 	run(opts: RuntimeOpts): Promise<RuntimeResult>;
 }
 
-function extractText(result: unknown): string {
+export function extractText(result: unknown): string {
 	if (
 		typeof result === "object" &&
 		result !== null &&

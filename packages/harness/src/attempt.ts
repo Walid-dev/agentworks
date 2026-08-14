@@ -5,7 +5,7 @@ import { checkBaseline, snapshotIdSet } from "./baseline.js";
 import { type GradeRecord, grade } from "./graders.js";
 import type { Lane } from "./lanes.js";
 import { createLogger } from "./logger.js";
-import { bareLoopRuntime } from "./runtime.js";
+import { selectRuntime } from "./openai-runtime.js";
 import { assertNoPlaceholder, runSetup, substituteRun } from "./setup.js";
 import type { GoldenTask } from "./tasks.js";
 import { runTeardown } from "./teardown.js";
@@ -59,10 +59,13 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 
 	const token = process.env.SHORTCUT_API_TOKEN;
 	if (!token) throw new Error("SHORTCUT_API_TOKEN is not set");
-	// Dry-run makes zero model calls; ANTHROPIC_API_KEY is only required
-	// when the runtime will actually be invoked.
-	if (!opts.dryRun && !process.env.ANTHROPIC_API_KEY)
-		throw new Error("ANTHROPIC_API_KEY is not set");
+	// Dry-run makes zero model calls; the driver's env key is only
+	// required when the runtime will actually be invoked. selectRuntime
+	// also validates the driver-id family up front so a typo fails
+	// before setup creates fixtures.
+	const { runtime, requiredEnv } = selectRuntime(opts.driverId);
+	if (!opts.dryRun && !process.env[requiredEnv])
+		throw new Error(`${requiredEnv} is not set`);
 
 	const { log, events } = createLogger(transcriptPath, [token]);
 
@@ -193,9 +196,9 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 		};
 	}
 
-	let runtimeResult: Awaited<ReturnType<typeof bareLoopRuntime.run>>;
+	let runtimeResult: Awaited<ReturnType<typeof runtime.run>>;
 	try {
-		runtimeResult = await bareLoopRuntime.run({
+		runtimeResult = await runtime.run({
 			task: opts.task,
 			userPrompt: substituteRun(opts.task.prompt, runStamp),
 			mcp,

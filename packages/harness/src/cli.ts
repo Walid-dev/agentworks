@@ -207,9 +207,14 @@ program
 
 			// Resume mode: count existing completed transcripts per
 			// (task, lane) cell and decrement how many more attempts each
-			// cell needs. "Completed" = has meta.end with grade_status
-			// other than "refused". Anything else — including a missing
-			// meta.end — counts as needing a fresh attempt.
+			// cell needs. A transcript counts as coverage only when:
+			//   (a) meta.start.dry_run is falsy (dry-run artifacts NEVER
+			//       count as coverage — verified by the rung-2-post
+			//       aftermath guard), AND
+			//   (b) meta.end is present with grade_status that isn't
+			//       "refused" or a dry-run status.
+			// Anything else — missing meta.end, refused, dry-run — counts
+			// as needing a fresh attempt.
 			const cellNeeded = new Map<string, number>();
 			for (const task of tasks) {
 				for (const lane of lanes) {
@@ -228,12 +233,18 @@ program
 								.split("\n")
 								.filter((l) => l.length > 0)
 								.map((l) => JSON.parse(l) as Record<string, unknown>);
+							const metaStart = events.find(
+								(e) => e.type === "meta.start",
+							) as { dry_run?: boolean } | undefined;
+							if (metaStart?.dry_run === true) continue;
 							const metaEnd = events.find((e) => e.type === "meta.end") as
 								| { grade_status?: string; status?: string }
 								| undefined;
 							if (!metaEnd) continue;
 							const gs = metaEnd.grade_status ?? metaEnd.status;
-							if (!gs || gs === "refused") continue;
+							if (!gs) continue;
+							if (gs === "refused") continue;
+							if (gs === "dry-run-ok" || gs === "dry-run-fail") continue;
 							const key = `${task.id}|${lane.id}`;
 							cellNeeded.set(key, (cellNeeded.get(key) ?? 0) - 1);
 						}

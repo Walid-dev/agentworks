@@ -1,5 +1,6 @@
 import {
 	appendFileSync,
+	existsSync,
 	mkdirSync,
 	readdirSync,
 	readFileSync,
@@ -144,6 +145,10 @@ program
 		"run every attempt as a preflight (no model calls)",
 		false,
 	)
+	.option(
+		"--resume <sweep-id>",
+		"resume: only run grid slots without a completed meta.end in that sweep's directory",
+	)
 	.action(
 		async (opts: {
 			tasks: string;
@@ -154,6 +159,7 @@ program
 			lanesFile: string;
 			runsDir: string;
 			dryRun: boolean;
+			resume?: string;
 		}) => {
 			const allTasks = loadTasksDir(opts.tasksDir);
 			for (const r of allTasks) {
@@ -186,9 +192,59 @@ program
 				return l;
 			});
 
-			const sweepId = new Date().toISOString().replace(/[:.]/g, "-");
+			const sweepId = opts.resume
+				? opts.resume
+				: new Date().toISOString().replace(/[:.]/g, "-");
+			if (opts.resume) {
+				const sweepDir = join(opts.runsDir, sweepId);
+				if (!existsSync(sweepDir)) {
+					console.error(`sweep dir not found for --resume: ${sweepDir}`);
+					process.exit(1);
+				}
+			}
 			const dbPath = join(opts.runsDir, "bench.sqlite");
 			const db = openBench(dbPath);
+
+			// Resume mode: count existing completed transcripts per
+			// (task, lane) cell and decrement how many more attempts each
+			// cell needs. "Completed" = has meta.end with grade_status
+			// other than "refused". Anything else — including a missing
+			// meta.end — counts as needing a fresh attempt.
+			const cellNeeded = new Map<string, number>();
+			for (const task of tasks) {
+				for (const lane of lanes) {
+					cellNeeded.set(`${task.id}|${lane.id}`, opts.reps);
+				}
+			}
+			if (opts.resume) {
+				for (const task of tasks) {
+					for (const lane of lanes) {
+						const dir = join(opts.runsDir, sweepId, task.id, lane.id);
+						if (!existsSync(dir)) continue;
+						for (const f of readdirSync(dir)) {
+							if (!f.endsWith(".jsonl")) continue;
+							const text = readFileSync(join(dir, f), "utf8");
+							const events = text
+								.split("\n")
+								.filter((l) => l.length > 0)
+								.map((l) => JSON.parse(l) as Record<string, unknown>);
+							const metaEnd = events.find((e) => e.type === "meta.end") as
+								| { grade_status?: string; status?: string }
+								| undefined;
+							if (!metaEnd) continue;
+							const gs = metaEnd.grade_status ?? metaEnd.status;
+							if (!gs || gs === "refused") continue;
+							const key = `${task.id}|${lane.id}`;
+							cellNeeded.set(key, (cellNeeded.get(key) ?? 0) - 1);
+						}
+					}
+				}
+			}
+			const cellNeededSnapshot = new Map(cellNeeded);
+			const totalToRun = Array.from(cellNeeded.values()).reduce(
+				(a, n) => a + Math.max(0, n),
+				0,
+			);
 
 			const teardownLogPath = join(opts.runsDir, sweepId, "teardown-log.jsonl");
 			mkdirSync(dirname(teardownLogPath), { recursive: true });
@@ -202,25 +258,51 @@ program
 			let refused = 0;
 			let dryOk = 0;
 			let dryFail = 0;
-			const total = tasks.length * lanes.length * opts.reps;
 			let idx = 0;
 
-			teardownLog({
-				type: "sweep.start",
-				sweep_id: sweepId,
-				tasks: tasks.map((t) => t.id),
-				lanes: lanes.map((l) => l.id),
-				reps: opts.reps,
-				driver: opts.driver,
-				at: new Date().toISOString(),
-			});
+			if (opts.resume) {
+				const missing = Array.from(cellNeededSnapshot.entries())
+					.filter(([, n]) => n > 0)
+					.map(([k, n]) => ({ cell: k, needed: n }));
+				teardownLog({
+					type: "sweep.resume",
+					sweep_id: sweepId,
+					tasks: tasks.map((t) => t.id),
+					lanes: lanes.map((l) => l.id),
+					reps: opts.reps,
+					driver: opts.driver,
+					attempts_to_run: totalToRun,
+					missing_by_cell: missing,
+					at: new Date().toISOString(),
+				});
+				console.log(
+					`resume ${sweepId}: ${totalToRun} attempts to run across ${missing.length} cells`,
+				);
+				for (const m of missing) {
+					console.log(`  ${m.cell}: needs ${m.needed}`);
+				}
+			} else {
+				teardownLog({
+					type: "sweep.start",
+					sweep_id: sweepId,
+					tasks: tasks.map((t) => t.id),
+					lanes: lanes.map((l) => l.id),
+					reps: opts.reps,
+					driver: opts.driver,
+					at: new Date().toISOString(),
+				});
+			}
 
 			for (let rep = 0; rep < opts.reps; rep++) {
 				for (const task of tasks) {
 					for (const lane of lanes) {
+						const key = `${task.id}|${lane.id}`;
+						const needed = cellNeeded.get(key) ?? 0;
+						if (needed <= 0) continue;
 						idx++;
-						const label = `[${idx}/${total}] rep=${rep + 1} task=${task.id} lane=${lane.id}`;
+						const label = `[${idx}/${totalToRun}] rep=${rep + 1} task=${task.id} lane=${lane.id}`;
 						process.stdout.write(`${label} ... `);
+						cellNeeded.set(key, needed - 1);
 						try {
 							const result = await runAttempt({
 								task,

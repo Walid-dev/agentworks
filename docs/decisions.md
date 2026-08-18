@@ -4,6 +4,49 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-18 — Terra bridge readings banked (4 pilots x 2 lanes x
+  3 reps = 24 attempts, gpt-5.6-terra, Responses API, reasoning
+  medium, cost ~$0.30). Findings, in order:
+  (a) Implicit state trap now 11/11 on naive across Opus, Sonnet,
+      and Terra: the trap lives in the tool surface (only
+      `workflow_state_types` exposed, no name filter), not in the
+      model family. Same failure mode reproduces across three
+      independent drivers.
+  (b) The clarify-reflex is DRIVER behavior, not a design law:
+      Terra never asked a clarifying question on ambiguous prompts;
+      Sonnet refused 9/9 on `state-backlog-implicit`. Whatever
+      earlier notes framed as a benchmark property is a
+      Sonnet-family behavior in disguise.
+  (c) First cross-family divergence candidate: Terra fired the
+      state-family trap ONCE on the CURATED lane
+      (`state-trap-implicit` 2/3, not 3/3). Terra reasoned that
+      state type "started" ⊃ "currently working on" and included
+      In Review; the curated toolset exposed the disambiguation and
+      the driver chose to conflate anyway. Sonnet's curated header
+      had this task solid. Full sweep decides if it replicates.
+  (d) Terra tool-path preference on naive: chose the type-only
+      `queryStories` over the name-capable `searchStories` on
+      `state-name-vs-type`, failing an explicit-name task once
+      where Sonnet passed 3/3. First case of Terra bypassing a
+      name-capable tool that was available on the same lane.
+  (e) Fixture-title leak found and fixed: `triage-highest-priority`
+      fixture titled "Priority probe" leaked the answer via keyword
+      on every lane. Both bridge lanes 3/3 pass on this task were
+      false positives (agents pick by title without touching any
+      priority-bearing tool). Fixture renamed to "Q3 backlog spike";
+      the task's notes record what was invalidated where.
+      Report #1 verified leak-free via Sonnet naive's
+      priority-receipts trail.
+  (f) Grader fetch flake found and fixed: `state-name-vs-type`
+      curated rep 1 came back ungraded because the /search/stories
+      GET threw "fetch failed" mid-grade with no retry. Terra's
+      answer was correct ("17"). Bounded retry (0/2/4/8s, logged
+      receipts) now wraps every live fetch in the grading path via
+      `withFetchRetry`; the previously-added
+      `resolveByNameWithRetry` composes with it (index-poll on the
+      outside, network-retry on each attempt).
+  Bridge cells stand as validation data, not headline data.
+
 - 2026-08-18 — Cross-family lane runs `gpt-5.6-terra` as deployed:
   Responses API (`/v1/responses`), reasoning effort `medium` (API
   default made explicit, pinned in the request), function tools flat.

@@ -9,7 +9,7 @@ grade:
   - workspace_unchanged: true
 setup:
   - ref: priority-story
-    title: "Priority probe {{run}}"
+    title: "Q3 backlog spike {{run}}"
     state: "To Do"
     story_type: chore
     priority: "Highest"
@@ -31,3 +31,8 @@ notes: >
   (baseline-2026-08-11.md removed the priority from sc-22) and the
   fixture setup now explicitly sits ON the team, matching the prompt's
   "team's board" phrasing.
+
+  2026-08-18: original title "Priority probe" leaked the answer via
+  keyword; bridge cells for this task invalidated both lanes; Report
+  #1 verified leak-free (Sonnet naive passed via priority:highest
+  receipts; Sonnet curated never answered).

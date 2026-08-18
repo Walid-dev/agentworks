@@ -252,10 +252,54 @@ async function defaultSleep(ms: number): Promise<void> {
 }
 
 // Retry policy: 4 total attempts spaced by 0s / 2s / 4s / 8s, per the
-// 1.8 diagnosis. Shortcut's search index is eventually consistent;
-// short reads immediately after a create sometimes miss. Every attempt
-// is logged as a receipt so a disputed grade can be re-litigated.
+// 1.8 diagnosis. Two orthogonal uses:
+//
+// (1) resolveByNameWithRetry polls Shortcut's eventually-consistent
+//     search index: short reads immediately after a create sometimes
+//     miss even though the underlying fetch succeeds. The retry re-runs
+//     the search until a name match appears.
+//
+// (2) withFetchRetry wraps every live grader fetch to absorb network-
+//     level transient failures (e.g. TypeError "fetch failed" observed
+//     on Terra bridge, state-name-vs-type curated rep 1). This is
+//     orthogonal to (1) — a name-search-with-index-lag call site is
+//     wrapped by (1), and each of its underlying HTTP calls is
+//     independently wrapped by (2). Every attempt (both kinds) appends
+//     a receipt so a disputed grade can be re-litigated.
 const RETRY_DELAYS_MS = [0, 2000, 4000, 8000] as const;
+
+// Bounded-retry wrapper for a single live-fetch operation. Retries any
+// thrown error (network or HTTP status), mirrors the teardown retry
+// policy, and appends one receipt per attempt with attempt number,
+// pre-attempt delay, and ok/error status. The final failure re-throws
+// the last error unchanged.
+export async function withFetchRetry<T>(
+	op: () => Promise<T>,
+	endpoint: string,
+	receipts: Receipt[],
+	sleep: (ms: number) => Promise<void> = defaultSleep,
+): Promise<T> {
+	let lastErr: Error | undefined;
+	for (let i = 0; i < RETRY_DELAYS_MS.length; i++) {
+		const delay = RETRY_DELAYS_MS[i] ?? 0;
+		if (delay > 0) await sleep(delay);
+		try {
+			const result = await op();
+			receipts.push({
+				endpoint: `${endpoint} (attempt ${i + 1}, delay ${delay}ms, ok)`,
+				at: new Date().toISOString(),
+			});
+			return result;
+		} catch (e) {
+			lastErr = e as Error;
+			receipts.push({
+				endpoint: `${endpoint} (attempt ${i + 1}, delay ${delay}ms, error: ${lastErr.message})`,
+				at: new Date().toISOString(),
+			});
+		}
+	}
+	throw lastErr ?? new Error(`${endpoint} failed after retries`);
+}
 
 export async function resolveByNameWithRetry(
 	workspace: Workspace,
@@ -267,20 +311,22 @@ export async function resolveByNameWithRetry(
 	for (let attempt = 0; attempt < RETRY_DELAYS_MS.length; attempt++) {
 		const delay = RETRY_DELAYS_MS[attempt] ?? 0;
 		if (delay > 0) await sleep(delay);
-		const results = await workspace.searchByName(title);
-		receipts.push({
-			endpoint: `GET /search/stories?query=name:"${title}" (attempt ${attempt + 1}, delay ${delay}ms)`,
-			at: new Date().toISOString(),
-		});
+		const results = await withFetchRetry(
+			() => workspace.searchByName(title),
+			`GET /search/stories?query=name:"${title}" (index-poll ${attempt + 1}, delay ${delay}ms)`,
+			receipts,
+			sleep,
+		);
 		const matches = results.filter((s) => casingEqual(s.name, title, casing));
 		if (matches.length === 1) {
 			const first = matches[0];
 			if (!first) continue;
-			const full = await workspace.fetchStory(first.id);
-			receipts.push({
-				endpoint: `GET /stories/${first.id}`,
-				at: new Date().toISOString(),
-			});
+			const full = await withFetchRetry(
+				() => workspace.fetchStory(first.id),
+				`GET /stories/${first.id}`,
+				receipts,
+				sleep,
+			);
 			if (full) return { kind: "hit", story: full };
 		} else if (matches.length > 1) {
 			return { kind: "ambiguous", ids: matches.map((m) => m.id) };
@@ -297,14 +343,16 @@ async function resolveByHarvestedIds(
 	title: string,
 	casing: "insensitive" | "exact",
 	receipts: Receipt[],
+	sleep: (ms: number) => Promise<void> = defaultSleep,
 ): Promise<ResolveOutcome> {
 	const hits: LiveStoryFull[] = [];
 	for (const id of ids) {
-		const full = await workspace.fetchStory(id);
-		receipts.push({
-			endpoint: `GET /stories/${id} (id-first)`,
-			at: new Date().toISOString(),
-		});
+		const full = await withFetchRetry(
+			() => workspace.fetchStory(id),
+			`GET /stories/${id} (id-first)`,
+			receipts,
+			sleep,
+		);
 		if (full && casingEqual(full.name, title, casing)) hits.push(full);
 	}
 	if (hits.length === 1) {
@@ -557,11 +605,11 @@ async function checkCommentOn(
 			receipts,
 		};
 	}
-	const story = await fetchStoryFull(inputs.token, storyId);
-	receipts.push({
-		endpoint: `GET /stories/${storyId}`,
-		at: new Date().toISOString(),
-	});
+	const story = await withFetchRetry(
+		() => fetchStoryFull(inputs.token, storyId as number),
+		`GET /stories/${storyId}`,
+		receipts,
+	);
 	if (!story) {
 		return {
 			kind: "comment_on",
@@ -611,11 +659,11 @@ export async function checkAnswerIds(
 		}
 		// Workspace-wide, not team-scoped: a teamless story in the target
 		// state must appear in the expected set. See docs/specs/graders.md.
-		const stories = await workspace.searchByState(wanted);
-		receipts.push({
-			endpoint: `GET /search/stories?query=state:"${wanted}" (workspace-wide)`,
-			at: new Date().toISOString(),
-		});
+		const stories = await withFetchRetry(
+			() => workspace.searchByState(wanted),
+			`GET /search/stories?query=state:"${wanted}" (workspace-wide)`,
+			receipts,
+		);
 		expected = new Set(stories.map((s) => s.id));
 		source = `equals_state:${wanted}`;
 	} else if (inner.equals_fixture !== undefined) {
@@ -677,8 +725,16 @@ export async function grade(inputs: GradeInputs): Promise<GradeRecord> {
 	);
 	const checks: CheckResult[] = [];
 	const workspace = createLiveWorkspace(inputs.token);
+	// Vocab-load happens before any per-check receipt sink exists. If it
+	// flakes, capture the retry attempts on the ungraded reason so the
+	// audit trail survives.
+	const vocabReceipts: Receipt[] = [];
 	try {
-		const vocab = await loadVocabulary(inputs.token);
+		const vocab = await withFetchRetry(
+			() => loadVocabulary(inputs.token),
+			"loadVocabulary (workflows+groups+self+custom-fields)",
+			vocabReceipts,
+		);
 		for (const g of inputs.task.grade) {
 			if (g.story_exists !== undefined) {
 				checks.push(
@@ -697,10 +753,14 @@ export async function grade(inputs: GradeInputs): Promise<GradeRecord> {
 			}
 		}
 	} catch (e) {
+		const trail =
+			vocabReceipts.length > 0
+				? ` (vocab-load attempts: ${vocabReceipts.length})`
+				: "";
 		return {
 			type: "grade",
 			status: "ungraded",
-			reason: `grader crashed: ${(e as Error).message}`,
+			reason: `grader crashed: ${(e as Error).message}${trail}`,
 			checks,
 			measurements,
 			at: new Date().toISOString(),

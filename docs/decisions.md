@@ -4,6 +4,19 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-18 — Cross-family lane runs `gpt-5.6-terra` as deployed:
+  Responses API (`/v1/responses`), reasoning effort `medium` (API
+  default made explicit, pinned in the request), function tools flat.
+  Runtime A (Anthropic Sonnet 4.6) has no reasoning knob; Runtime C
+  (OpenAI Terra) is a reasoning model that ships with reasoning on.
+  Family and reasoning mode therefore vary together across the
+  cross-family bridge — inherent to cross-family replication, not a
+  confound to eliminate; disclosed in the report. `reasoning_effort`
+  is recorded in every gpt-* transcript's `meta.start` for
+  auditability. Chat Completions was ruled out after two preflight
+  rejections (`max_tokens` unsupported → `max_completion_tokens`;
+  tools + reasoning unsupported on Chat Completions).
+
 - 2026-08-15 — Report #1 gate ruling: `state-backlog-implicit`
   task EXCLUDED from the headline. Prompt "which stories are still
   ahead of us" is genuinely ambiguous — both the narrow reading

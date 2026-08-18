@@ -63,7 +63,9 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 	// required when the runtime will actually be invoked. selectRuntime
 	// also validates the driver-id family up front so a typo fails
 	// before setup creates fixtures.
-	const { runtime, requiredEnv } = selectRuntime(opts.driverId);
+	const { runtime, requiredEnv, reasoningEffort } = selectRuntime(
+		opts.driverId,
+	);
 	if (!opts.dryRun && !process.env[requiredEnv])
 		throw new Error(`${requiredEnv} is not set`);
 
@@ -74,6 +76,9 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 		task_id: opts.task.id,
 		lane_id: opts.lane.id,
 		driver_id: opts.driverId,
+		...(reasoningEffort !== undefined
+			? { reasoning_effort: reasoningEffort }
+			: {}),
 		run_stamp: runStamp,
 		sweep_id: sweep,
 		dry_run: opts.dryRun === true,

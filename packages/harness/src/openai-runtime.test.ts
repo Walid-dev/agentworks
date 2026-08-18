@@ -1,17 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
-	buildOpenAIRequestParams,
+	buildOpenAIResponsesFollowupRequest,
+	buildOpenAIResponsesInitialRequest,
 	type McpToolLike,
-	mcpToolsToOpenAI,
-	openaiUsageToAggregate,
+	mcpToolsToResponsesTools,
+	OPENAI_REASONING_EFFORT,
+	openaiResponsesUsageToAggregate,
 	selectRuntime,
 } from "./openai-runtime.js";
 import { MAX_TOKENS } from "./runtime.js";
 
-// Shape-mapping tests for Runtime C — pure functions only. The live
-// bareLoopRuntime and openaiRuntime instances hit their SDKs at run
-// time; here we test the boundary between MCP and OpenAI, and the
-// driver-id dispatch.
+// Shape-mapping tests for Runtime C (Responses API). Pure functions
+// only. The live runtime hits the SDK at runtime; here we test the
+// MCP-tools → Responses-tools boundary, the usage → four-axis mapping,
+// the request-body shape (endpoint discriminator + reasoning pin), and
+// the driver-id dispatch.
 
 const mcpTools: McpToolLike[] = [
 	{
@@ -30,150 +33,226 @@ const mcpTools: McpToolLike[] = [
 	},
 ];
 
-describe("mcpToolsToOpenAI (MCP → Chat Completions tool schema)", () => {
-	it("wraps each tool in {type:'function', function:{name,description,parameters}}", () => {
-		const out = mcpToolsToOpenAI(mcpTools);
+describe("mcpToolsToResponsesTools (MCP → Responses function-tool schema)", () => {
+	it("emits FLAT function tools (name/description/parameters at top level, not nested under function:{})", () => {
+		const out = mcpToolsToResponsesTools(mcpTools);
 		expect(out).toHaveLength(2);
 		expect(out[0]).toEqual({
 			type: "function",
-			function: {
-				name: "whoami",
-				description: "return the caller",
-				parameters: { type: "object", properties: {} },
-			},
+			name: "whoami",
+			description: "return the caller",
+			parameters: { type: "object", properties: {} },
+			strict: null,
 		});
+		// Explicitly assert the Chat-Completions nesting is NOT present.
+		expect(out[0]).not.toHaveProperty("function");
 		expect(out[1]).toEqual({
 			type: "function",
-			function: {
-				name: "get_story",
-				description: "read a story by id",
-				parameters: {
-					type: "object",
-					properties: { id: { type: "number" } },
-					required: ["id"],
-				},
+			name: "get_story",
+			description: "read a story by id",
+			parameters: {
+				type: "object",
+				properties: { id: { type: "number" } },
+				required: ["id"],
 			},
+			strict: null,
 		});
 	});
 
 	it("defaults an empty description to ''", () => {
-		const out = mcpToolsToOpenAI([
+		const out = mcpToolsToResponsesTools([
 			{ name: "no_desc", inputSchema: { type: "object", properties: {} } },
 		]);
-		expect(out[0]?.function.description).toBe("");
+		expect(out[0]?.description).toBe("");
 	});
 
 	it("defaults a missing inputSchema to an empty object schema", () => {
-		const out = mcpToolsToOpenAI([{ name: "no_schema" }]);
-		expect(out[0]?.function.parameters).toEqual({
+		const out = mcpToolsToResponsesTools([{ name: "no_schema" }]);
+		expect(out[0]?.parameters).toEqual({
 			type: "object",
 			properties: {},
 		});
 	});
 
-	it("preserves ordering (the caching-relevant property for Anthropic; still worth pinning here)", () => {
-		const out = mcpToolsToOpenAI(mcpTools);
-		expect(out.map((t) => t.function.name)).toEqual(["whoami", "get_story"]);
+	it("preserves ordering (worth pinning even where OpenAI caches automatically)", () => {
+		const out = mcpToolsToResponsesTools(mcpTools);
+		expect(out.map((t) => t.name)).toEqual(["whoami", "get_story"]);
 	});
 });
 
-describe("openaiUsageToAggregate (OpenAI usage → cache-aware aggregate)", () => {
-	it("splits prompt_tokens into cached vs uncached", () => {
-		const agg = openaiUsageToAggregate({
-			prompt_tokens: 1000,
-			completion_tokens: 40,
-			prompt_tokens_details: { cached_tokens: 700 },
+describe("openaiResponsesUsageToAggregate (Responses usage → cache-aware aggregate)", () => {
+	it("splits input_tokens into cached vs uncached; carries cache_write and reasoning-inclusive output", () => {
+		const agg = openaiResponsesUsageToAggregate({
+			input_tokens: 1000,
+			input_tokens_details: { cached_tokens: 700, cache_write_tokens: 150 },
+			output_tokens: 200,
+			output_tokens_details: { reasoning_tokens: 120 },
 		});
 		expect(agg).toEqual({
 			input_tokens: 300,
-			output_tokens: 40,
-			cache_creation_input_tokens: 0,
+			output_tokens: 200,
+			cache_creation_input_tokens: 150,
 			cache_read_input_tokens: 700,
 		});
 	});
 
 	it("puts everything into input_tokens when nothing is cached", () => {
-		const agg = openaiUsageToAggregate({
-			prompt_tokens: 500,
-			completion_tokens: 50,
-			prompt_tokens_details: { cached_tokens: 0 },
+		const agg = openaiResponsesUsageToAggregate({
+			input_tokens: 500,
+			input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+			output_tokens: 50,
+			output_tokens_details: { reasoning_tokens: 0 },
 		});
 		expect(agg.input_tokens).toBe(500);
 		expect(agg.cache_read_input_tokens).toBe(0);
 	});
 
 	it("puts everything into cache_read_input_tokens when the whole prompt was cached", () => {
-		const agg = openaiUsageToAggregate({
-			prompt_tokens: 500,
-			completion_tokens: 10,
-			prompt_tokens_details: { cached_tokens: 500 },
+		const agg = openaiResponsesUsageToAggregate({
+			input_tokens: 500,
+			input_tokens_details: { cached_tokens: 500, cache_write_tokens: 0 },
+			output_tokens: 10,
+			output_tokens_details: { reasoning_tokens: 0 },
 		});
 		expect(agg.input_tokens).toBe(0);
 		expect(agg.cache_read_input_tokens).toBe(500);
 	});
 
-	it("treats missing prompt_tokens_details as no cache (older responses)", () => {
-		const agg = openaiUsageToAggregate({
-			prompt_tokens: 100,
-			completion_tokens: 20,
+	it("treats missing input_tokens_details as no cache (older responses)", () => {
+		const agg = openaiResponsesUsageToAggregate({
+			input_tokens: 100,
+			output_tokens: 20,
 		});
 		expect(agg.input_tokens).toBe(100);
 		expect(agg.cache_read_input_tokens).toBe(0);
+		expect(agg.cache_creation_input_tokens).toBe(0);
 	});
 
-	it("never emits a negative uncached count if cached exceeds prompt (shouldn't happen, but guarded)", () => {
-		const agg = openaiUsageToAggregate({
-			prompt_tokens: 5,
-			completion_tokens: 5,
-			prompt_tokens_details: { cached_tokens: 999 },
+	it("never emits a negative uncached count if cached exceeds input (shouldn't happen, but guarded)", () => {
+		const agg = openaiResponsesUsageToAggregate({
+			input_tokens: 5,
+			input_tokens_details: { cached_tokens: 999, cache_write_tokens: 0 },
+			output_tokens: 5,
 		});
 		expect(agg.input_tokens).toBe(0);
 	});
 
-	it("cache_creation_input_tokens stays 0 for OpenAI (no separate write cost)", () => {
-		const agg = openaiUsageToAggregate({
-			prompt_tokens: 500,
-			completion_tokens: 20,
-			prompt_tokens_details: { cached_tokens: 100 },
+	it("output_tokens carries reasoning-inclusive count (reasoning is billed as output)", () => {
+		const agg = openaiResponsesUsageToAggregate({
+			input_tokens: 100,
+			input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+			output_tokens: 200,
+			output_tokens_details: { reasoning_tokens: 150 },
 		});
-		expect(agg.cache_creation_input_tokens).toBe(0);
+		// The aggregate's output_tokens intentionally includes reasoning
+		// tokens (they bill as output). The reasoning-only count is
+		// surfaced on assistant events, not in the four-axis aggregate.
+		expect(agg.output_tokens).toBe(200);
 	});
 });
 
-describe("buildOpenAIRequestParams (Chat Completions request shape)", () => {
-	const tools = mcpToolsToOpenAI([
+describe("build{Initial,Followup}OpenAIResponsesRequest (Responses request shape)", () => {
+	const tools = mcpToolsToResponsesTools([
 		{ name: "whoami", inputSchema: { type: "object", properties: {} } },
 	]);
-	const messages = [
-		{ role: "system" as const, content: "sys" },
-		{ role: "user" as const, content: "hi" },
-	];
 
-	it("uses max_completion_tokens, not the legacy max_tokens (newer OpenAI models reject max_tokens)", () => {
-		const params = buildOpenAIRequestParams("gpt-5.6-terra", messages, tools);
-		expect(params).toHaveProperty("max_completion_tokens", MAX_TOKENS);
-		expect(params).not.toHaveProperty("max_tokens");
+	it("initial request targets /v1/responses shape (instructions + input string + tools + max_output_tokens + reasoning.effort medium)", () => {
+		const params = buildOpenAIResponsesInitialRequest(
+			"gpt-5.6-terra",
+			"you are a tool operator",
+			"do the thing",
+			tools,
+		);
+		expect(params.model).toBe("gpt-5.6-terra");
+		expect(params.instructions).toBe("you are a tool operator");
+		expect(params.input).toBe("do the thing");
+		expect(params.tools).toBe(tools);
+		expect(params).toHaveProperty("max_output_tokens", MAX_TOKENS);
+		expect(params.reasoning).toEqual({ effort: "medium" });
 	});
 
-	it("carries model, messages, and tools through unchanged", () => {
-		const params = buildOpenAIRequestParams("gpt-5.6-terra", messages, tools);
+	it("initial request carries neither max_tokens nor max_completion_tokens (both belong to /v1/chat/completions)", () => {
+		const params = buildOpenAIResponsesInitialRequest(
+			"gpt-5.6-terra",
+			"sys",
+			"hi",
+			tools,
+		);
+		expect(params).not.toHaveProperty("max_tokens");
+		expect(params).not.toHaveProperty("max_completion_tokens");
+	});
+
+	it("follow-up request chains via previous_response_id and carries function-call outputs as input items", () => {
+		const outputs = [
+			{
+				type: "function_call_output" as const,
+				call_id: "call_abc",
+				output: "42",
+			},
+		];
+		const params = buildOpenAIResponsesFollowupRequest(
+			"gpt-5.6-terra",
+			"resp_xyz",
+			outputs,
+			tools,
+		);
 		expect(params.model).toBe("gpt-5.6-terra");
-		expect(params.messages).toBe(messages);
+		expect(params.previous_response_id).toBe("resp_xyz");
+		expect(params.input).toBe(outputs);
 		expect(params.tools).toBe(tools);
+		expect(params).toHaveProperty("max_output_tokens", MAX_TOKENS);
+		expect(params.reasoning).toEqual({ effort: "medium" });
+	});
+
+	it("follow-up request also carries neither max_tokens nor max_completion_tokens", () => {
+		const params = buildOpenAIResponsesFollowupRequest(
+			"gpt-5.6-terra",
+			"resp_xyz",
+			[],
+			tools,
+		);
+		expect(params).not.toHaveProperty("max_tokens");
+		expect(params).not.toHaveProperty("max_completion_tokens");
+	});
+
+	it("initial request does NOT carry previous_response_id (that field is follow-up only)", () => {
+		const params = buildOpenAIResponsesInitialRequest(
+			"gpt-5.6-terra",
+			"sys",
+			"hi",
+			tools,
+		);
+		expect(params).not.toHaveProperty("previous_response_id");
+	});
+
+	it("follow-up request does NOT carry instructions (they persist via previous_response_id)", () => {
+		const params = buildOpenAIResponsesFollowupRequest(
+			"gpt-5.6-terra",
+			"resp_xyz",
+			[],
+			tools,
+		);
+		expect(params).not.toHaveProperty("instructions");
+	});
+
+	it("exports the pinned reasoning effort as a stable constant (single source of truth for meta.start too)", () => {
+		expect(OPENAI_REASONING_EFFORT).toBe("medium");
 	});
 });
 
 describe("selectRuntime (driver-id family dispatch)", () => {
-	it("routes claude-* to Runtime A with ANTHROPIC_API_KEY", () => {
-		const { runtime, requiredEnv } = selectRuntime("claude-sonnet-4-6");
-		expect(runtime).toBeDefined();
-		expect(requiredEnv).toBe("ANTHROPIC_API_KEY");
+	it("routes claude-* to Runtime A with ANTHROPIC_API_KEY and no reasoning tag", () => {
+		const sel = selectRuntime("claude-sonnet-4-6");
+		expect(sel.runtime).toBeDefined();
+		expect(sel.requiredEnv).toBe("ANTHROPIC_API_KEY");
+		expect(sel.reasoningEffort).toBeUndefined();
 	});
 
-	it("routes gpt-* to Runtime C with OPENAI_API_KEY", () => {
-		const { runtime, requiredEnv } = selectRuntime("gpt-5.6-terra");
-		expect(runtime).toBeDefined();
-		expect(requiredEnv).toBe("OPENAI_API_KEY");
+	it("routes gpt-* to Runtime C with OPENAI_API_KEY and reasoningEffort='medium' (recorded in meta.start)", () => {
+		const sel = selectRuntime("gpt-5.6-terra");
+		expect(sel.runtime).toBeDefined();
+		expect(sel.requiredEnv).toBe("OPENAI_API_KEY");
+		expect(sel.reasoningEffort).toBe("medium");
 	});
 
 	it("throws on unknown driver family", () => {

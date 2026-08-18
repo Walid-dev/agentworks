@@ -4,6 +4,31 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-15 — Report #1 gate ruling: `state-backlog-implicit`
+  task EXCLUDED from the headline. Prompt "which stories are still
+  ahead of us" is genuinely ambiguous — both the narrow reading
+  (state = Backlog, {sc-30}) and the broad reading (state ∈ {To Do,
+  Backlog}, 7 stories) are defensible in English. Answer key locks
+  the narrow reading; both lanes exonerated on this task. Queued
+  for rework; Report #1 headline computed on 19 tasks / 114 attempts.
+- 2026-08-15 — Report #1 gate ruling: pilot-gate.md F4 conjecture
+  overturned. Curated 3/3 correct on `info-epic-writeback` despite
+  its `get_story` trimming `epic_id` — the agent inferred sc-30's
+  epic-less status from the outlier profile visible without epic_id
+  (Backlog state, empty description, duplicate title, no story
+  links, no tasks) across ten get_story calls. Info-vs-cost is a
+  cost RATIO, not a capability wall: curated matched naive on
+  outcome at a 2.8× tool-call premium (14 vs 5 per attempt).
+- 2026-08-15 — Report #1 gate ruling: required-parameter law
+  confirmed both edges. Reads that require an unknown argument
+  produce clarify-reflex — triage-highest-priority curated at 9/9
+  across pilots 1+2 and this sweep, zero tool calls per attempt.
+  Writes that require an unknown argument produce successful writes
+  with orientation preambles — orient-team-write +
+  orient-whoami-write curated at 6/6, naive at 4 pass / 2 fail
+  across the same six attempts. Asymmetry root cause: a read can
+  refuse ("I need to know…"); a write must produce some outcome,
+  which forces orientation before the create.
 - 2026-08-12 — Driver budget ruling (owner): Report #1's headline
   completes on claude-sonnet-4-6 as pinned, within a hard $15
   remaining-Anthropic cap. The 2026-08-10 opus second-tier pin is

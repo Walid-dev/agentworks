@@ -277,6 +277,23 @@ provenance disclosure as the curated toolset.
   priority-writeback + epic-writeback), 2 hierarchy (epic-mates,
   tasks-vs-stories).
 
+- **1.10 Run the two-lane sweep and produce Benchmark Report #1
+  (curated vs naive).** Owner: AI.
+  Full sweep on the two local stdio lanes only: every golden task ×
+  two lanes (curated, naive) × N repetitions × two driver tiers
+  (`official` from step 1.6 for the numbers in the report; `smoke`
+  for the sanity sweep and the cheap-tier axis). Compare the two
+  lanes across the metric set in `docs/STACK.md` "Metrics". No
+  verdict beyond what the numbers say; the report is the numbers.
+  Evidence: `docs/reports/benchmark-1.md` (gate-read finalized
+  2026-08-15); the committed sweep transcripts at
+  `runs/2026-08-14T13-52-01-885Z/`. Headline computed on 19 tasks
+  (state-backlog-implicit excluded per gate ruling): curated 45/57
+  (79%) vs naive 39/57 (68%), curated zero grade-mixed cells,
+  naive two. Cached per-attempt cost: curated $0.0159, naive
+  $0.0676. Total session cost $5.28, well under the $14 stop-line
+  and the $15 Anthropic cap.
+
 ### TODO
 
 - **1.9b Build Runtime C — OpenAI seat.** Owner: AI.
@@ -293,25 +310,6 @@ provenance disclosure as the curated toolset.
   input-shape assembly and message-role mapping; green dry-run
   sweep at the current suite size.
   Commit: `feat(harness): add openai runtime behind agentruntime`
-
-- **1.10 Run the two-lane sweep and produce Benchmark Report #1
-  (curated vs naive).** Owner: AI.
-  Full sweep on the two local stdio lanes only: every golden task ×
-  two lanes (curated, naive) × N repetitions × two driver tiers
-  (`official` from step 1.6 for the numbers in the report; `smoke`
-  for the sanity sweep and the cheap-tier axis). **Pin the `smoke`
-  driver id here as its first actual use, per STACK.md's
-  pin-at-first-use rule; recorded in `docs/decisions.md`.** Compare
-  the two lanes across the metric set in `docs/STACK.md` "Metrics".
-  No verdict beyond what the numbers say; the report is the numbers.
-  **Amendment (2026-08-12 driver budget ruling): caching is enabled
-  (Runtime A prompt-caching lands as its own commit prior to this
-  sweep); the second sweep tier is Runtime C on `gpt-5.6-terra` per
-  1.9b rather than the superseded opus pin; pre-launch cost
-  projection must be under $14 or stop and ask.**
-  Evidence: `docs/reports/benchmark-1.md` plus `runs/bench.sqlite`;
-  one new decisions.md line pinning the `smoke` driver id.
-  Commit: `docs(reports): benchmark report 1`
 
 - **1.11 Add the official Shortcut MCP as a third lane and reissue.**
   Owner: AI.

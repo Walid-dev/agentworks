@@ -1,6 +1,7 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import OpenAI from "openai";
 import type {
+	ChatCompletionCreateParamsNonStreaming,
 	ChatCompletionMessageParam,
 	ChatCompletionTool,
 } from "openai/resources/chat/completions";
@@ -39,6 +40,24 @@ export type McpToolLike = {
 	description?: string;
 	inputSchema?: unknown;
 };
+
+// Build the Chat Completions request body. Pinned via test:
+// newer OpenAI models (gpt-5.x, reasoning family) reject the
+// legacy `max_tokens` parameter and require `max_completion_tokens`.
+// Keeping this in a pure helper lets the shape be tested without
+// mocking the SDK client.
+export function buildOpenAIRequestParams(
+	driverId: string,
+	messages: ChatCompletionMessageParam[],
+	tools: ChatCompletionTool[],
+): ChatCompletionCreateParamsNonStreaming {
+	return {
+		model: driverId,
+		max_completion_tokens: MAX_TOKENS,
+		messages,
+		tools,
+	};
+}
 
 export function mcpToolsToOpenAI(tools: McpToolLike[]): ChatCompletionTool[] {
 	return tools.map((t) => ({
@@ -125,12 +144,9 @@ export const openaiRuntime: AgentRuntime = {
 
 		while (turn < MAX_TURNS) {
 			turn++;
-			const response = await client.chat.completions.create({
-				model: opts.driverId,
-				max_tokens: MAX_TOKENS,
-				messages,
-				tools,
-			});
+			const response = await client.chat.completions.create(
+				buildOpenAIRequestParams(opts.driverId, messages, tools),
+			);
 			const choice = response.choices[0];
 			if (!choice) throw new Error("openai response has no choices");
 			lastStopReason = choice.finish_reason;

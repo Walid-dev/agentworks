@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+	buildOpenAIRequestParams,
 	type McpToolLike,
 	mcpToolsToOpenAI,
 	openaiUsageToAggregate,
 	selectRuntime,
 } from "./openai-runtime.js";
+import { MAX_TOKENS } from "./runtime.js";
 
 // Shape-mapping tests for Runtime C — pure functions only. The live
 // bareLoopRuntime and openaiRuntime instances hit their SDKs at run
@@ -135,6 +137,29 @@ describe("openaiUsageToAggregate (OpenAI usage → cache-aware aggregate)", () =
 			prompt_tokens_details: { cached_tokens: 100 },
 		});
 		expect(agg.cache_creation_input_tokens).toBe(0);
+	});
+});
+
+describe("buildOpenAIRequestParams (Chat Completions request shape)", () => {
+	const tools = mcpToolsToOpenAI([
+		{ name: "whoami", inputSchema: { type: "object", properties: {} } },
+	]);
+	const messages = [
+		{ role: "system" as const, content: "sys" },
+		{ role: "user" as const, content: "hi" },
+	];
+
+	it("uses max_completion_tokens, not the legacy max_tokens (newer OpenAI models reject max_tokens)", () => {
+		const params = buildOpenAIRequestParams("gpt-5.6-terra", messages, tools);
+		expect(params).toHaveProperty("max_completion_tokens", MAX_TOKENS);
+		expect(params).not.toHaveProperty("max_tokens");
+	});
+
+	it("carries model, messages, and tools through unchanged", () => {
+		const params = buildOpenAIRequestParams("gpt-5.6-terra", messages, tools);
+		expect(params.model).toBe("gpt-5.6-terra");
+		expect(params.messages).toBe(messages);
+		expect(params.tools).toBe(tools);
 	});
 });
 

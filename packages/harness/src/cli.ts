@@ -233,9 +233,9 @@ program
 								.split("\n")
 								.filter((l) => l.length > 0)
 								.map((l) => JSON.parse(l) as Record<string, unknown>);
-							const metaStart = events.find(
-								(e) => e.type === "meta.start",
-							) as { dry_run?: boolean } | undefined;
+							const metaStart = events.find((e) => e.type === "meta.start") as
+								| { dry_run?: boolean }
+								| undefined;
 							if (metaStart?.dry_run === true) continue;
 							const metaEnd = events.find((e) => e.type === "meta.end") as
 								| { grade_status?: string; status?: string }

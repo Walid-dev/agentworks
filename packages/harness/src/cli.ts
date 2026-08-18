@@ -149,6 +149,12 @@ program
 		"--resume <sweep-id>",
 		"resume: only run grid slots without a completed meta.end in that sweep's directory",
 	)
+	.option(
+		"--pace-ms <ms>",
+		"inter-attempt delay in ms; smooths Shortcut rate limits on long sweeps",
+		(v) => Number.parseInt(v, 10),
+		0,
+	)
 	.action(
 		async (opts: {
 			tasks: string;
@@ -160,6 +166,7 @@ program
 			runsDir: string;
 			dryRun: boolean;
 			resume?: string;
+			paceMs: number;
 		}) => {
 			const allTasks = loadTasksDir(opts.tasksDir);
 			for (const r of allTasks) {
@@ -267,6 +274,7 @@ program
 			let failed = 0;
 			let ungraded = 0;
 			let refused = 0;
+			let crashed = 0;
 			let dryOk = 0;
 			let dryFail = 0;
 			let idx = 0;
@@ -314,6 +322,13 @@ program
 						const label = `[${idx}/${totalToRun}] rep=${rep + 1} task=${task.id} lane=${lane.id}`;
 						process.stdout.write(`${label} ... `);
 						cellNeeded.set(key, needed - 1);
+						// Inter-attempt pacing: applied AFTER the previous attempt
+						// has settled and BEFORE the next runs. Skips the initial
+						// gap. Smooths Shortcut rate limits without changing the
+						// per-attempt cost model.
+						if (opts.paceMs > 0 && idx > 1) {
+							await new Promise((r) => setTimeout(r, opts.paceMs));
+						}
 						try {
 							const result = await runAttempt({
 								task,
@@ -359,6 +374,7 @@ program
 							else if (result.grade_status === "fail") failed++;
 							else if (result.grade_status === "ungraded") ungraded++;
 							else if (result.grade_status === "refused") refused++;
+							else if (result.grade_status === "crashed") crashed++;
 							else if (result.grade_status === "dry-run-ok") dryOk++;
 							else if (result.grade_status === "dry-run-fail") dryFail++;
 						} catch (e) {
@@ -403,6 +419,7 @@ program
 				failed,
 				ungraded,
 				refused,
+				crashed,
 				dry_ok: dryOk,
 				dry_fail: dryFail,
 				at: new Date().toISOString(),
@@ -412,21 +429,24 @@ program
 
 			if (opts.dryRun) {
 				console.log(
-					`\ndry-run sweep ${sweepId}: dry-ok=${dryOk} dry-fail=${dryFail} refused=${refused}`,
+					`\ndry-run sweep ${sweepId}: dry-ok=${dryOk} dry-fail=${dryFail} refused=${refused} crashed=${crashed}`,
 				);
 			} else {
 				console.log(
-					`\nsweep ${sweepId}: passed=${passed} failed=${failed} ungraded=${ungraded} refused=${refused}`,
+					`\nsweep ${sweepId}: passed=${passed} failed=${failed} ungraded=${ungraded} refused=${refused} crashed=${crashed}`,
 				);
 			}
 			console.log(`bench.sqlite: ${dbPath}`);
 			console.log(`teardown log: ${teardownLogPath}`);
 
-			if (passed + failed + ungraded + refused + dryOk + dryFail === 0)
+			if (
+				passed + failed + ungraded + refused + crashed + dryOk + dryFail ===
+				0
+			)
 				process.exit(1);
-			// Sweep dry-run exits nonzero if any attempt failed preflight —
-			// makes CI-style gates trivial.
-			if (opts.dryRun && dryFail > 0) process.exit(1);
+			// Sweep dry-run exits nonzero if any attempt failed preflight
+			// or crashed — makes CI-style gates trivial.
+			if (opts.dryRun && (dryFail > 0 || crashed > 0)) process.exit(1);
 		},
 	);
 

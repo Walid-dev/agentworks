@@ -7,6 +7,7 @@ import type { Lane } from "./lanes.js";
 import { createLogger } from "./logger.js";
 import { selectRuntime } from "./openai-runtime.js";
 import { assertNoPlaceholder, runSetup, substituteRun } from "./setup.js";
+import { setShortcutRetryLogger } from "./shortcut.js";
 import type { GoldenTask } from "./tasks.js";
 import { runTeardown } from "./teardown.js";
 
@@ -27,6 +28,7 @@ export type GradeStatus =
 	| "fail"
 	| "ungraded"
 	| "refused"
+	| "crashed"
 	| "dry-run-ok"
 	| "dry-run-fail";
 
@@ -84,6 +86,76 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 		dry_run: opts.dryRun === true,
 		started_at: new Date().toISOString(),
 	});
+
+	// Wire the Shortcut retry logger so every 429/network retry inside
+	// baseline / setup / teardown / grader fetches lands as a
+	// shortcut.retry event on THIS attempt's transcript. Scope is
+	// strictly this attempt — the finally in the outer try clears it.
+	setShortcutRetryLogger((event) => log(event));
+
+	try {
+		return await runAttemptBody({
+			opts,
+			runStamp,
+			sweep,
+			transcriptPath,
+			token,
+			runtime,
+			log,
+			events,
+		});
+	} catch (e) {
+		// 58 missing meta.ends from the pre-fix full dry-run: baseline
+		// throwing after meta.start left the transcript half-closed.
+		// meta.end is now unconditional — every attempt's record either
+		// grades pass/fail/etc, or names the crash and the error.
+		const msg = (e as Error).message;
+		log({
+			type: "attempt.crash",
+			error: msg,
+			at: new Date().toISOString(),
+		});
+		log({
+			type: "meta.end",
+			grade_status: "crashed",
+			teardown_status: "skipped",
+			reason: msg,
+			ended_at: new Date().toISOString(),
+		});
+		return {
+			transcriptPath,
+			runStamp,
+			grade_status: "crashed",
+			teardown_status: "skipped",
+			reason: msg,
+		};
+	} finally {
+		setShortcutRetryLogger(undefined);
+	}
+}
+
+type BodyArgs = {
+	opts: AttemptOpts;
+	runStamp: string;
+	sweep: string;
+	transcriptPath: string;
+	token: string;
+	runtime: ReturnType<typeof selectRuntime>["runtime"];
+	log: (event: unknown) => void;
+	events: Record<string, unknown>[];
+};
+
+async function runAttemptBody(args: BodyArgs): Promise<AttemptResult> {
+	const {
+		opts,
+		runStamp,
+		sweep: _sweep,
+		transcriptPath,
+		token,
+		runtime,
+		log,
+		events,
+	} = args;
 
 	// Baseline check. Refuse loudly on a dirty course.
 	const baselineBefore = await checkBaseline(token);
@@ -185,10 +257,15 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 			at: new Date().toISOString(),
 		});
 		const gradeStatus: GradeStatus = ok ? "dry-run-ok" : "dry-run-fail";
+		const reason = ok ? undefined : dryFindings.join("; ");
 		log({
 			type: "meta.end",
 			grade_status: gradeStatus,
 			teardown_status: dryTd.status,
+			// dry-run-fail's reason was previously omitted from meta.end
+			// so downstream tooling that read it saw null. Serialize it
+			// on the meta.end record too — parallel with dry_run.summary.
+			...(reason !== undefined ? { reason } : {}),
 			ended_at: new Date().toISOString(),
 		});
 		return {
@@ -197,7 +274,7 @@ export async function runAttempt(opts: AttemptOpts): Promise<AttemptResult> {
 			grade_status: gradeStatus,
 			teardown_status: dryTd.status,
 			teardown_error: dryTd.error,
-			reason: ok ? undefined : dryFindings.join("; "),
+			reason,
 		};
 	}
 

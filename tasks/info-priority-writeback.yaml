@@ -1,21 +1,21 @@
 id: info-priority-writeback
 class: info-vs-cost
 prompt: >
-  Look at the story titled "Priority signal {{run}}" on the team's
-  board. Create a follow-up note story called "Priority note {{run}}"
+  Look at the story titled "Q3 latency audit {{run}}" on the team's
+  board. Create a follow-up note story called "Findings note {{run}}"
   for my team, story type chore. In the description, state the
   priority level of the source story.
 expected_tools: {}
 setup:
   - ref: source
-    title: "Priority signal {{run}}"
+    title: "Q3 latency audit {{run}}"
     state: "To Do"
     story_type: chore
     priority: "Highest"
     team: "Walid Hl's Team"
 grade:
   - story_exists:
-      title: "Priority note {{run}}"
+      title: "Findings note {{run}}"
       team: "Walid Hl's Team"
       story_type: chore
       description_contains: "Highest"
@@ -36,3 +36,13 @@ notes: >
   expected_tools is empty on purpose: no single right path, only a
   right answer. Uniqueness: {{run}} on both the source and note
   titles.
+
+  2026-08-18: title "Priority signal" was answer-telegraphing;
+  Report #1 verified retroactively clean (Sonnet naive passed via
+  genuine custom_fields receipts), renamed prospectively after Terra
+  demonstrated title-keyword shortcutting on the bridge. The
+  prescribed note story name was also shifted off the fixture's
+  stem ("Findings note", not "Q3 latency audit note") because shared
+  stems let a title-matching driver identify the target via search
+  adjacency without touching the priority field — same leak class,
+  one layer subtler.

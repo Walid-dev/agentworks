@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { checkBaseline, snapshotIdSet } from "./baseline.js";
-import { type GradeRecord, grade } from "./graders.js";
+import { type GradeRecord, grade, harvestStoryIds } from "./graders.js";
 import type { Lane } from "./lanes.js";
 import { createLogger } from "./logger.js";
 import { selectRuntime } from "./openai-runtime.js";
@@ -240,7 +240,15 @@ async function runAttemptBody(args: BodyArgs): Promise<AttemptResult> {
 			await mcp.close();
 		}
 
-		const dryTd = await runTeardownSafely(fixtures, preIds, token, log);
+		// Dry-run has no runtime, hence no tool_result events, hence no
+		// harvested ids. Fixtures still get the id-first pass.
+		const dryTd = await runTeardownSafely(
+			fixtures,
+			preIds,
+			new Set<number>(),
+			token,
+			log,
+		);
 		if (dryTd.status === "error") {
 			dryFindings.push(`teardown crashed: ${dryTd.error}`);
 		} else if (dryTd.record && !dryTd.record.baseline_reverify.ok) {
@@ -319,10 +327,22 @@ async function runAttemptBody(args: BodyArgs): Promise<AttemptResult> {
 	});
 	log(gradeRecord);
 
-	// Teardown: capture-before-destroy, then baseline re-verify. A
+	// Teardown: id-first (fixtures + harvested from transcript),
+	// then belt-and-braces search sweep, then baseline re-verify. A
 	// crash here never overwrites the grade — the transcript records
-	// both statuses independently.
-	const td = await runTeardownSafely(fixtures, preIds, token, log);
+	// both statuses independently. Harvesting from tool_result bodies
+	// closes the L7 hole where a fresh id could hide from the
+	// search-based sweep due to index lag (sc-570, 2026-08-18).
+	const harvestedIds = harvestStoryIds(
+		events as Array<Record<string, unknown> & { type: string }>,
+	);
+	const td = await runTeardownSafely(
+		fixtures,
+		preIds,
+		harvestedIds,
+		token,
+		log,
+	);
 
 	log({
 		type: "meta.end",
@@ -349,6 +369,7 @@ async function runAttemptBody(args: BodyArgs): Promise<AttemptResult> {
 async function runTeardownSafely(
 	fixtures: Awaited<ReturnType<typeof runSetup>>,
 	preIds: Set<number>,
+	harvestedIds: Set<number>,
 	token: string,
 	log: (event: unknown) => void,
 ): Promise<{
@@ -357,7 +378,7 @@ async function runTeardownSafely(
 	record?: Awaited<ReturnType<typeof runTeardown>>;
 }> {
 	try {
-		const record = await runTeardown(fixtures, preIds, token);
+		const record = await runTeardown(fixtures, preIds, harvestedIds, token);
 		log({ type: "teardown", ...record, at: new Date().toISOString() });
 		if (!record.baseline_reverify.ok) {
 			return { status: "error", record, error: "baseline re-verify failed" };

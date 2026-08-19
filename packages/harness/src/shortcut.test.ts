@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-	setShortcutRetryLogger,
 	type ShortcutRetryEvent,
+	setShortcutRetryLogger,
 	shortcutFetch,
 } from "./shortcut.js";
 

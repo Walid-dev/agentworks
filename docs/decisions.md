@@ -4,6 +4,18 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-18 — Report #1 lead L7 fired at full scale (sc-570):
+  teardown's search-based stray detection missed an index-lagged
+  story; 35 attempts correctly refused at zero cost. Teardown is
+  now id-first from transcript receipts (fixtures + every id
+  harvested from tool_result bodies via harvestStoryIds), each
+  deletion verified by direct GET expecting 404 — direct id reads
+  are not index-lagged. Search-based sweep demoted to belt-and-
+  braces (with one bounded re-poll when a verified-absent id still
+  appears in the snapshot, to absorb known index-lag). Test pins
+  the exact failure mode: a fixture transcript with a created id
+  that search cannot see must still get deleted and verified.
+
 - 2026-08-18 — Terra bridge readings banked (4 pilots x 2 lanes x
   3 reps = 24 attempts, gpt-5.6-terra, Responses API, reasoning
   medium, cost ~$0.30). Findings, in order:

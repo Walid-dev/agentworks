@@ -4,6 +4,38 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-19 — Report #2 leads registered (L1-L7, cross-family
+  companion). L1: success gap is driver-tier-dependent — Sonnet
+  curated 79% vs naive 68%, Terra curated 77% vs naive 88% (opposite
+  headline, same magnitude). L2: cost gap is driver-tier-INdependent
+  — 4.24x (Sonnet) vs 4.25x (Terra); cost is a tool-surface
+  property. L3: implicit state trap universal at this tier — 14/14
+  on `state-trap-implicit` naive across Opus (2/2 Phase 0 hand-
+  exam), Sonnet (6/6), Terra (6/6). L4: contradictory tool responses
+  break Terra more than Sonnet — F2 curated server payload defect
+  turned into 0/3 fail on Terra but 3/3 pass on Sonnet, worth naming
+  as a Terra characteristic. L5: clarify-reflex belongs to Sonnet,
+  not the benchmark — 9/9 Sonnet vs 0/9 Terra on ambiguous prompts;
+  Report #1 F4's "required-parameter law" is a Sonnet-family
+  behavior. L6: outlier-inference tasks are a task-design class
+  flaw — info-epic-writeback and triage-highest-priority both pass
+  on curated by outlier inference not by reading the trimmed field;
+  two-fixture redesign queued. L7: retired — fired at scale
+  (sc-570) and closed by id-first teardown (commit 3ea768d, pinning
+  test lands the exact failure mode).
+
+- 2026-08-19 — Report #2 dual-prediction resolution. W's 2026-08-08
+  registered prediction (success gaps shrink on stronger drivers)
+  CONFIRMED on the success axis — inverted, not just shrunk (11 pp
+  swing, same magnitude, opposite sign). Advisor's side (cost gap
+  holds; trap class is a tool-surface property) HOLDS on both axes:
+  cost gap replicates within 0.01x across pricing structures, trap
+  fires 14/14 lifetime on naive across three families. The finding:
+  which lane wins depends on the driver tier. Success favors naive
+  under strong reasoning drivers; cost favors curated everywhere at
+  ~4x per attempt; trap class fires on the naive lane regardless of
+  driver strength. Different axes tell different stories.
+
 - 2026-08-18 — Report #1 lead L7 fired at full scale (sc-570):
   teardown's search-based stray detection missed an index-lagged
   story; 35 attempts correctly refused at zero cost. Teardown is

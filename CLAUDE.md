@@ -78,6 +78,11 @@ seems useful.
   then defer to the human's ruling.
 
 ## Committing
+Before every commit, run `git status --short` and confirm the staged
+set matches the commit's intended scope exactly. Anything unexpected
+in the index STOPS the commit — unstage or ask. A commit message is
+a claim about its contents; the index is checked, never assumed.
+
 Write REPORT.md only when asked, and OVERWRITE it every time. Scope:
 unless a different scope is named, cover the work currently in flight —
 normally the docs/PLAN.md step being worked on, including all its

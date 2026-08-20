@@ -4,6 +4,11 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-19 — Phase 1 closed. Exit criterion met: Benchmark Report
+  #1 committed (and exceeded: cross-family companion #2). Phase 2
+  direction decided at the gate per the standing dual prediction,
+  now resolved axis-split.
+
 - 2026-08-19 — Report #2 leads registered (L1-L7, cross-family
   companion). L1: success gap is driver-tier-dependent — Sonnet
   curated 79% vs naive 68%, Terra curated 77% vs naive 88% (opposite

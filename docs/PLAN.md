@@ -294,52 +294,60 @@ provenance disclosure as the curated toolset.
   $0.0676. Total session cost $5.28, well under the $14 stop-line
   and the $15 Anthropic cap.
 
-### TODO
-
 - **1.9b Build Runtime C — OpenAI seat.** Owner: AI.
   Second AgentRuntime implementation behind the same interface as
   Runtime A. Raw openai SDK, same per-attempt lifecycle (amnesiac,
   turn cap, MCP client over stdio, identical system prompt). Enables
   the cross-family replication lane per the 2026-08-12 driver budget
-  ruling in `docs/decisions.md`. No paid model calls in this step:
-  verification is free dry-run against both existing Shortcut lanes
-  plus shape-mapping unit tests that pin the request assembly and
-  the tool-result echo path.
-  Evidence: `packages/harness/src/runtime.ts` gains an
-  `openaiRuntime` alongside `bareLoopRuntime`; unit tests for
-  input-shape assembly and message-role mapping; green dry-run
-  sweep at the current suite size.
+  ruling in `docs/decisions.md`.
+  Evidence: `packages/harness/src/openai-runtime.ts` with
+  `openaiRuntime` and `selectRuntime` dispatch alongside
+  `bareLoopRuntime`; shape-mapping unit tests
+  (`openai-runtime.test.ts`) pin the request assembly and the
+  tool-result echo path. Migrated from Chat Completions to the
+  Responses API pre-full-sweep because gpt-5.6-terra rejects the
+  tools+reasoning combination on `/v1/chat/completions`; reasoning
+  effort pinned to `medium` and recorded in every gpt-* transcript's
+  `meta.start` for auditability. Free build + dry-run verified;
+  paid smoke (1 attempt), bridge (24 attempts), and Report #2's full
+  sweep (120 attempts) all landed on this runtime.
   Commit: `feat(harness): add openai runtime behind agentruntime`
+  (initial) + `feat(harness): migrate openai runtime to responses api`.
 
-- **1.11 Add the official Shortcut MCP as a third lane and reissue.**
+- **1.10b Cross-family companion report (Benchmark Report #2).**
   Owner: AI.
-  The official Shortcut MCP is an **external boundary** — a remote
-  server we do not control — so it gets its own step. A connection
-  failure cannot block the headline report from 1.10. Wire the
-  remote server over the streamable-HTTP transport in
-  `@modelcontextprotocol/sdk`; no editing on the official side.
-  **Connectivity/auth verify gate: the harness must successfully
-  connect, list tools, and complete one read call against the
-  official server before any sweep runs.** Then re-run the full
-  sweep across all three lanes (curated, naive, official) at the
-  same tier settings as 1.10, and produce a reissued report.
-  Evidence: `docs/reports/benchmark-1-with-official.md` plus the
-  reissued `runs/bench.sqlite`; server identity and version (as
-  surfaced by the remote) recorded in `docs/decisions.md`.
-  Commit: `docs(reports): benchmark report 1 with official lane`
+  Same suite, same graders, same lanes as 1.10; different driver.
+  Full sweep on gpt-5.6-terra (Responses API, reasoning medium
+  pinned), --pace-ms 1500, id-first teardown. Report #1 lead L7
+  fired at full scale (sc-570 slipped past search-based teardown due
+  to index lag; 35 attempts correctly refused at zero cost; teardown
+  rewritten id-first, pinning test lands the exact failure mode);
+  sweep resumed the 35 missing slots at $0.47.
+  Evidence: `docs/reports/benchmark-2.md` (gate-read finalized
+  2026-08-19); the committed sweep transcripts at
+  `runs/2026-08-18T21-33-07-215Z/`. Headline computed on 19 tasks
+  (state-backlog-implicit excluded, same ruling as Report #1):
+  naive 50/57 (88%) vs curated 44/57 (77%) — inverting Report #1's
+  headline; the trap class (`state-trap-implicit`) fires 14/14
+  lifetime on the naive lane across Opus, Sonnet, and Terra. Cost:
+  $1.42 for the 120-attempt sweep (first execution $0.95 + resume
+  $0.47), well under the $4.50 stop-line.
+  Commit: `docs(reports): benchmark report 2, cross-family companion`
 
 - **1.12 Close Phase 1.** Owner: W.
-  Confirm the exit criterion is met: Benchmark Report #1 (the
-  two-lane report from 1.10) exists, with real numbers, and the
-  format is stable enough to run again on the monthly upgrade day.
-  The official-lane reissue from 1.11 is a **bonus, not a gate** —
-  its presence or absence does not affect phase closure. Tag
-  `phase-1`. Draft the Phase 2 step list into this file, informed by
-  what Report #1 revealed and the pending refiner-aggressiveness
-  axis (see `docs/decisions.md` 2026-08-08).
-  Evidence: the `phase-1` tag exists and this file contains a
-  Phase 2 step list.
-  Commit: `docs(plan): close phase 1 and plan phase 2`
+  Exit criterion met: Benchmark Report #1 (the two-lane report from
+  1.10) exists with real numbers, and was exceeded by the
+  cross-family companion Report #2 (1.10b). Format is stable enough
+  to run again on the monthly upgrade day.
+  Evidence: `docs/reports/benchmark-1.md` and
+  `docs/reports/benchmark-2.md`.
+  Commit: `docs(plan): close phase 1`
+
+### DEFERRED
+
+- **1.11 Add the official Shortcut MCP as a third lane and reissue.**
+  Bonus lane, non-gating per plan; deferred post-phase, runnable any
+  time as its own mini-report.
 
 ---
 

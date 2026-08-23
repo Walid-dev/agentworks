@@ -67,7 +67,7 @@ durable need.
 
 ### The refiner — turning a raw conversion into a good toolset
 
-**Status: candidate for Phase 2. Not built. Decided at the Phase 1 gate.**
+**Status: parked candidate second product line (platform-buyer hypothesis); not the Phase 2 default. See decisions 2026-08-23.**
 
 Marcus builds an AI assistant for dental clinics on top of a booking
 system's API. On day one he runs an off-the-shelf converter, gets over a
@@ -110,7 +110,8 @@ Why she uses it: agent-readiness is becoming what mobile-readiness once
 was, and she cannot see her own site through an agent's eyes. This runs
 on the same engine as Sofia's product, pointed at a harder surface with
 no clean source of truth — which is why the plan builds the engine on a
-controlled system first and turns to websites only once it is proven.
+controlled system first, keeping websites as a candidate direction,
+gate-pending.
 
 ---
 
@@ -135,6 +136,40 @@ matching it is the stretch goal. Official toolsets carry years of product
 knowledge, some never written down, so approaching them on public
 information alone is already the result that matters.
 
+## Where the product stands after Phase 1
+
+The Examiner is the proven core — two benchmark reports across two
+model families (Sonnet 4.6 and gpt-5.6-terra), ~$7 total inference.
+Three findings held up under measurement: **which toolset wins depends
+on the driver tier** (Sonnet: curated leads; Terra: naive leads —
+same suite, same graders, opposite headline); **the naive surface
+costs ~4x per task** under every pricing scheme tested; **some traps
+live in the toolset regardless of driver** (the naive lane's implicit
+state trap fires 14/14 across Opus, Sonnet, and Terra). Reports at
+`docs/reports/benchmark-1.md` and `docs/reports/benchmark-2.md`.
+
+| Capability | File checkers | Lighthouse | Task-runners | AgentWorks |
+|---|---|---|---|---|
+| Static file/markup checks | yes | yes | partial | easy add |
+| Runs a real agent through tasks | no | no | yes | yes, proven |
+| Grades against reality, not the AI's word | no | no | partial | doctrine |
+| Repeats runs, reports flip-flops | no | no | no | yes |
+| Compares interface lanes (pages vs site tools) | no | no | no | the empty axis |
+| Compares cheap vs expensive drivers | no | no | no | proven twice |
+| Cost-per-task accounting | no | no | partial | to the token |
+| Full recordings as receipts | no | partial | replays | canonical |
+| Self-serve product with customers | partial | free | yes | not yet |
+
+**Business model (candidate — gate open).** Static-only free tier
+(zero-cost-to-us doctrine: no live-agent runs on our keys before
+payment); flat-priced deep audits, quoted internally from measured
+token costs, no customer-facing token markup; subscription re-checks
+as the recurring spine (drivers, tools, browsers change monthly);
+BYOK developer tier for CI. The public benchmark corpus is our own
+budgeted research program (capped, scheduled, published as reports) —
+not a customer subsidy. Every element here is a candidate awaiting
+the Phase 2 gate.
+
 ## How this differs from existing agent benchmarks
 
 Public benchmarks such as MCP-Bench, MCP-RADAR, and MCPEval measure the
@@ -155,8 +190,9 @@ one existing leaderboards don't address.
 The engine underneath — real tasks, repeated attempts, recorded
 transcripts, deterministic grading against reality — is deliberately
 surface-agnostic: MCP toolsets first, other surfaces such as websites
-later. Keeping that breadth is a standing design constraint: we build
-for the axis, not for one target.
+later as a candidate direction, gate-pending. Keeping that breadth is
+a standing design constraint: we build for the axis, not for one
+target.
 
 ## Goals, in order
 
@@ -180,11 +216,11 @@ Build the Examiner before the machine. Write 20 to 25 real tasks, each with an a
 
 **Exit:** Benchmark Report #1 exists, with real numbers.
 
-### Phase 2. The design engine (4 to 6 weeks)
+### Phase 2. Direction chosen at the gate
 
-Build the Designer and the Builder. Feed in the manual and the docs, receive a designed toolset and generated code. From this point on, every improvement is judged by the Examiner's scores, not by taste.
+Direction is selected at the open Phase 2 gate (see PLAN.md § "Phase 2 gate (open)") from the candidates in the gate ledger (`docs/decisions.md` 2026-08-23). The design-engine framing is retired with Door 2's closure — which toolset wins depends on the driver tier, so designing one toolset in advance is the wrong shape.
 
-**Exit:** the machine's toolset is benchmarked against all three others.
+**Exit:** the gate closes when its three steps complete and the owner rules on direction.
 
 ### Phase 3. The improvement loop (3 to 4 weeks)
 
@@ -215,7 +251,7 @@ Public release: a clean command-line tool anyone can run, and the essay: what ha
 ## Future directions (parked on purpose)
 
 - **The web version.** Described in full above as the website-examiner persona (Amira); see "Who uses this, in concrete terms."
-- **A browser-standard output.** Emerging standards let websites offer tools to AI directly in the browser. Our Designer could produce those too: same engine, new body.
+- **A browser-standard output.** Emerging standards let websites offer tools to AI directly in the browser. If Phase 2 lands on a designer direction, the same engine could produce those too.
 - **A testing service.** Companies adopting AI need continuous proof their setups still work after every model update. The Examiner is that product.
 - **A public leaderboard.** Scoring the official toolsets of popular software: a reputation asset nobody can unpublish.
 

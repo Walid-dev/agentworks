@@ -351,6 +351,37 @@ provenance disclosure as the curated toolset.
 
 ---
 
+## Phase 2 gate (open)
+
+The gate is OPEN. Direction is not chosen; every product element is
+labeled candidate. Three steps must complete and the owner must rule
+before Phase 2 begins. Full context in `docs/decisions.md` 2026-08-23
+"Phase 2 gate: research done, direction open".
+
+- **G.1 Browser-attempt cost spike.** Owner: AI.
+  Spec-first, measures BOTH lanes (DOM and WebMCP) per attempt in
+  time, tokens, dollars, and flake rate. The comparison is the
+  product; the spike is how we price the comparison. No paid runs
+  without a budget statement stating expected cost from measured
+  per-attempt numbers.
+
+- **G.2 Refiner steelman search.** Owner: advisor.
+  In-chat exercise. Establishes whether Door 1 (refiner as candidate
+  second product line) has a defensible buyer hypothesis strong
+  enough to keep the door on the ledger. Platform-buyer hypothesis
+  is the starting point per decisions 2026-08-23.
+
+- **G.3 Product report-screen description.** Owner: W.
+  What the audit output looks like from the customer's side —
+  concrete enough to test against the empty-axes framing (interface
+  lanes, driver tiers) and against the pricing rulings (flat per
+  configuration, no token markup, subscription re-checks).
+
+The gate closes only when all three are done and the owner rules on
+the direction.
+
+---
+
 ## Phase 2 and later
 
 Planned at each phase gate, not before. The phase goals and exit

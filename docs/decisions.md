@@ -4,6 +4,50 @@ One line per decision: date — decision — why. Newest on top.
 
 ## Decided
 
+- 2026-08-23 — Phase 2 gate: research done, direction open.
+  Gate ledger: Door 2 (from-scratch designer) CLOSED — the
+  driver-tier finding from Report #2 removed its premise (which
+  toolset wins depends on the driver, so "design one toolset in
+  advance" is the wrong shape). Door 1 (refiner) PARKED as candidate
+  second product line; buyer hypothesis = platforms shipping
+  auto-generated toolsets; steelman search pending. Door 3
+  (websites — DOM lane + WebMCP lane) researched, NOT decided.
+  Product-relevant market facts registered: WebMCP is real and
+  shipping — Shopify enabled it on all Liquid storefronts on
+  2026-08-05 (9 tools, no merchant opt-in), Cloudflare shipped a
+  one-toggle developer preview 2026-08-06, Chrome-only today, spec
+  still moving (pin a snapshot if built against). Paying market for
+  agent audits exists (task-runner audits at ~£13 wholesale). No
+  existing product compares interface lanes (DOM vs site tools) or
+  driver tiers — the two empty axes we already know how to fill.
+  Moat doctrine (candidate): accumulated public measurement data
+  plus method reputation, not speed.
+  Pricing rulings (owner, 2026-08-23): NO free live-agent runs —
+  zero-cost-to-us until paid; free tier is static checks only; paid
+  audits are flat-priced per configuration, quoted internally from
+  measured token costs — NO customer-facing token markup
+  (unpredictable bills, commodity-margin trap); subscription
+  re-checks are the recurring spine (drivers, tools, browsers change
+  monthly); registration fee rejected at launch (revisit as an abuse
+  deposit on store-token audits if needed).
+  Two-lane requirement AFFIRMED after the owner's WebMCP-only
+  challenge: the comparison is the product; the G.1 spike (see
+  PLAN.md) measures both lanes' economics; repetition-weighting is
+  the budget knob, not lane deletion.
+  Housekeeping on prior entries:
+  (a) 2026-08-08 Pending "Phase 2 direction — refiner aggressiveness"
+      now reads under Door-1-parked — the design axis is preserved
+      for the second product line, not a Phase 2 default assumption.
+  (b) 2026-08-08 Pending "Embeddings provider — Phase 2 gate (Voyage
+      vs OpenAI)" is deferred — it presumed a Designer-shaped Phase
+      2, which is no longer the assumed direction.
+  (c) The 2026-08-19 phase-1-close wording "Phase 2 direction decided
+      at the gate per the standing dual prediction, now resolved
+      axis-split" is clarified: what resolved axis-split was the
+      dual PREDICTION (W on success, Advisor on cost + trap class);
+      the Phase 2 DIRECTION is not decided and is now the open gate
+      recorded here.
+
 - 2026-08-19 — Phase 1 closed. Exit criterion met: Benchmark Report
   #1 committed (and exceeded: cross-family companion #2). Phase 2
   direction decided at the gate per the standing dual prediction,

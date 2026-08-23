@@ -23,6 +23,8 @@ Experts building those dashboards by hand cannot keep up with the amount of soft
 
 ## What we are building: three parts
 
+Conceived as three parts. After Phase 1: the Examiner is the proven core; the Designer as originally conceived is closed as the Phase 2 default (`docs/decisions.md` 2026-08-23), with candidate shapes living in the gate ledger; the Builder persists as the emission layer, serving whichever direction the gate chooses.
+
 1. **The Designer.** An AI that reads the manual (the API description) and the human docs, then decides: which few tools should exist, what they should be called, and how they should be explained so another AI never misunderstands them.
 2. **The Builder.** Takes the Designer's decisions and generates working code from templates. Deliberately boring and predictable: the AI designs, the templates build. No improvisation inside the code.
 3. **The Examiner.** A testing rig. It gives an AI assistant a list of real tasks ("create a project card titled X", "find all my blocked items"), lets it work using a given toolset, then checks the results automatically: did it truly succeed, in how many steps, at what cost. Every task runs several times, because AI results vary, and scores are averaged.
@@ -31,15 +33,15 @@ The Examiner is the most valuable part. It turns opinions ("this looks good") in
 
 ## Who uses this, in concrete terms
 
-Three products could be built on this project's engine. One is what
-Phase 1 builds; two are candidate futures, chosen or not at the Phase 1
-gate with Benchmark Report #1 in hand. Each is described below as a
-single real user on a single day. Status is marked plainly so this
-section is not mistaken for a promise.
+Three products could be built on this project's engine. One is now
+built and proven (Phase 1 complete); the others are candidate futures,
+weighed at the open Phase 2 gate. Each is described below as a single
+real user on a single day. Status is marked plainly so this section is
+not mistaken for a promise.
 
 ### The Examiner — a quality gate for agent toolsets
 
-**Status: this is what Phase 1 builds. Grounded in work already done.**
+**Status: the proven core — Phase 1 complete (Benchmark Reports #1 and #2).**
 
 Sofia runs the platform team at a 40-person company. Their support agent
 reaches an internal ticketing system through an MCP toolset built months
@@ -198,7 +200,7 @@ target.
 
 1. **Learning.** Master modern AI engineering by building, not just reading: how agents work, how AI quality is measured, how tools and context are designed. Every phase pairs building with selected reading.
 2. **A public, credible artifact.** An open project plus a published write-up of the benchmark results. In this field, demonstrated measurement is worth more than any certificate.
-3. **Business upside.** Companies run thousands of private software interfaces that will never receive expert-made toolsets. A machine that produces them automatically, with proof of quality, has real customers. Adjacent futures are listed near the end.
+3. **Business upside.** Companies run thousands of private software interfaces that will never receive expert-made toolsets. Proof of quality is the product; whether the machine also produces the artifacts it grades is a gate decision. Adjacent futures are listed near the end.
 
 ## The plan: five phases
 
@@ -224,7 +226,7 @@ Direction is selected at the open Phase 2 gate (see PLAN.md § "Phase 2 gate (op
 
 ### Phase 3. The improvement loop (3 to 4 weeks)
 
-Teach the system to learn from its own failures: every failed task is classified (wrong tool chosen, unclear description, missing capability) and fed back into the Designer automatically. Add a second software target to prove the machine generalizes beyond one case.
+Teach the system to learn from its own failures: every failed task is classified (wrong tool chosen, unclear description, missing capability) and fed back into whichever improvement loop Phase 2's direction establishes — gate-pending. Add a second software target to prove the machine generalizes beyond one case.
 
 **Exit:** a report across two targets showing scores improving, loop after loop.
 
@@ -252,7 +254,7 @@ Public release: a clean command-line tool anyone can run, and the essay: what ha
 
 - **The web version.** Described in full above as the website-examiner persona (Amira); see "Who uses this, in concrete terms."
 - **A browser-standard output.** Emerging standards let websites offer tools to AI directly in the browser. If Phase 2 lands on a designer direction, the same engine could produce those too.
-- **A testing service.** Companies adopting AI need continuous proof their setups still work after every model update. The Examiner is that product.
+- **A testing service.** Companies adopting AI need continuous proof their setups still work after every model update. The Examiner is that product's engine (see the candidate business model in "Where the product stands after Phase 1").
 - **A public leaderboard.** Scoring the official toolsets of popular software: a reputation asset nobody can unpublish.
 
 ## Honest risks
